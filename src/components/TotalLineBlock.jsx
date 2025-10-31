@@ -4,7 +4,7 @@ export default function TotalLineBlock({ series }) {
     const data = (series||[]).map(it => ({ year: it.year, total: +it.totalB || 0 }))
     return (
         <div className="card">
-            <h3 style={{marginTop:0}}>Динамика Total B по годам</h3>
+            <h3 style={{marginTop:0}}>Динамика оценки по годам</h3>
             <div style={{height:320}}>
                 <ResponsiveContainer>
                     <LineChart data={data}>
