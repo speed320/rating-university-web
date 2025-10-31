@@ -42,7 +42,7 @@ body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #f5f7fb
 
 .group-tabs { display:grid; gap:10px; }
 .group-tabs .item { border:var(--border); border-radius:var(--radius); padding:10px 12px; background:#fff; cursor:pointer; }
-.group-tabs .item.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.group-tabs .item.active { background:#e6eeff; border-color:#c7d2fe }
 
 .table { width:100%; border-collapse: collapse; }
 .table th,.table td { border:var(--border); padding:10px; }
