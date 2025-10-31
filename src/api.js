@@ -43,5 +43,8 @@ export const Api = {
 
     // результаты
     getCalcAll: () => request('/api/b/calc'),
-    getCalcByYear: (year) => request(`/api/b/calc/${year}`)
+    getCalcByYear: (year) => request(`/api/b/calc/${year}`),
+
+    //чистка
+    clearAll: () => fetch(`${base}/b/clear`, { method: 'DELETE' })
 }

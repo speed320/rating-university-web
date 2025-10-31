@@ -120,15 +120,25 @@ export default function InputPage() {
     }
 
     // очистить все
-    const clearAll = () => {
-        if (!window.confirm('Очистить ВСЕ данные?')) return
-        setForms({ [initialYear]: template(initialYear) })
-        setYears([initialYear])
-        setYear(initialYear)
-        localStorage.removeItem(LS_FORMS_KEY)
-        localStorage.removeItem(LS_YEARS_KEY)
-        setMenuOpen(false)
+    const clearAll = async () => {
+        if (!window.confirm('Очистить ВСЕ данные (включая сервер)?')) return
+        setBusy(true)
+        try {
+            await Api.clearAll() // ← новый вызов на бэкенд
+            setForms({ [initialYear]: template(initialYear) })
+            setYears([initialYear])
+            setYear(initialYear)
+            localStorage.removeItem(LS_FORMS_KEY)
+            localStorage.removeItem(LS_YEARS_KEY)
+            alert('Данные полностью очищены')
+        } catch (err) {
+            alert('Ошибка очистки: ' + err.message)
+        } finally {
+            setBusy(false)
+            setMenuOpen(false)
+        }
     }
+
 
     // импорт/экспорт
     const onImportClick = () => { fileRef.current?.click(); setMenuOpen(false) }
