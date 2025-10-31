@@ -1,20 +1,23 @@
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+    Legend, Tooltip, ResponsiveContainer
+} from 'recharts'
 
 const PALETTE = [
     '#2563eb', '#10b981', '#f59e0b', '#ef4444',
     '#8b5cf6', '#14b8a6', '#f97316', '#22c55e'
 ]
 
+// Ожидает dataYears: [{year, B11,B12,B13,B21}, ...] — по одной записи на год (последняя итерация)
 export default function RadarBlock({ dataYears }) {
-    // dataYears: [{year, B11,B12,B13,B21}, ...]
     const metrics = ['B11','B12','B13','B21']
 
-    // строим общую таблицу для всех лет сразу
     const years = (dataYears || [])
         .map(x => x.year)
-        .filter((v, i, a) => a.indexOf(v) === i)
+        .filter((v,i,a)=>a.indexOf(v)===i)
         .sort((a,b)=>a-b)
 
+    // Общая таблица: [{ metric:'B11', '2024':12.3, '2025':9.1 }, ...]
     const base = metrics.map(m => {
         const row = { metric: m }
         for (const y of years) {
