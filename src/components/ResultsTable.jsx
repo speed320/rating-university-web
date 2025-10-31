@@ -7,7 +7,6 @@ export default function ResultsTable({ items }) {
                     <thead>
                     <tr>
                         <th>Год</th>
-                        <th>Итерация</th>
                         <th>B11</th>
                         <th>B12</th>
                         <th>B13</th>
@@ -19,7 +18,6 @@ export default function ResultsTable({ items }) {
                     {items?.length ? items.map((r,i)=>(
                         <tr key={i}>
                             <td>{r.year}</td>
-                            <td>{r.iteration}</td>
                             <td>{(+r.B11).toFixed(2)}</td>
                             <td>{(+r.B12).toFixed(2)}</td>
                             <td>{(+r.B13).toFixed(2)}</td>

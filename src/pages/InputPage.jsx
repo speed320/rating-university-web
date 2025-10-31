@@ -37,7 +37,6 @@ const pick = (obj, ...keys) => {
     return 0
 }
 
-// Приводим любые входные данные к нашей форме
 const normalize = (r) => {
     const y = Number.isFinite(+r?.year) ? +r.year : new Date().getFullYear()
     return {
@@ -64,20 +63,15 @@ export default function InputPage() {
     const [busy, setBusy] = useState(false)
     const [klass, setKlass] = useState('B')
     const [group, setGroup] = useState(1)
-    const [year, setYear] = useState(
-        cached.years?.length ? cached.years[cached.years.length - 1] : initialYear
-    )
-    const [years, setYears] = useState(cached.years?.length ? cached.years : [year])
-    const [forms, setForms] = useState(
-        Object.keys(cached.forms || {}).length ? cached.forms : { [year]: template(year) }
-    )
-
+    const [years, setYears] = useState(cached.years?.length ? cached.years : [initialYear])
+    const [year, setYear] = useState(years[years.length - 1])
+    const [forms, setForms] = useState(Object.keys(cached.forms || {}).length ? cached.forms : { [year]: template(year) })
     const fileRef = useRef()
 
-    // Кэшируем при любых изменениях
+    // сохраняем в localStorage при любых изменениях
     useEffect(() => { saveToLS(forms, years) }, [forms, years])
 
-    // Первичная загрузка с бэка и мягкое слияние поверх локальных
+    // подхватить с бэка
     useEffect(() => {
         Api.getParamsAll()
             .then(list => {
@@ -92,17 +86,13 @@ export default function InputPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // Переключили год — гарантируем форму
     useEffect(() => {
         setForms(prev => (prev[year] ? prev : ({ ...prev, [year]: template(year) })))
         setYears(prev => Array.from(new Set([...prev, year])).sort((a,b)=>a-b))
     }, [year])
 
     const current = forms[year] || template(year)
-
-    const setField = (key, numVal) => {
-        setForms(prev => ({ ...prev, [year]: { ...(prev[year] || template(year)), [key]: numVal } }))
-    }
+    const setField = (key, numVal) => setForms(prev => ({ ...prev, [year]: { ...(prev[year] || template(year)), [key]: numVal } }))
 
     const fields = useMemo(() => {
         switch (group) {
@@ -114,6 +104,34 @@ export default function InputPage() {
         }
     }, [group])
 
+    // === Управление годами ===
+    const addYear = () => {
+        const y = Math.max(...years) + 1
+        setYears([...years, y])
+        setForms({ ...forms, [y]: template(y) })
+        setYear(y)
+    }
+
+    const removeYear = (y) => {
+        if (!window.confirm(`Удалить данные за ${y} год?`)) return
+        const nextYears = years.filter(v => v !== y)
+        const nextForms = { ...forms }
+        delete nextForms[y]
+        setYears(nextYears)
+        setForms(nextForms)
+        if (year === y) setYear(nextYears[nextYears.length - 1] || initialYear)
+    }
+
+    const clearAll = () => {
+        if (!window.confirm('Очистить ВСЕ данные?')) return
+        setForms({ [initialYear]: template(initialYear) })
+        setYears([initialYear])
+        setYear(initialYear)
+        localStorage.removeItem(LS_FORMS_KEY)
+        localStorage.removeItem(LS_YEARS_KEY)
+    }
+
+    // === Импорт / Экспорт ===
     const onImportClick = () => fileRef.current?.click()
 
     const onFileSelected = async (e) => {
@@ -125,7 +143,6 @@ export default function InputPage() {
             if (!json || json.class !== 'B' || !Array.isArray(json.data)) {
                 alert('Неверный JSON'); return
             }
-            // 1) моментально применим локально
             const byYear = {}
             for (const it of json.data) {
                 const n = normalize(it)
@@ -138,7 +155,6 @@ export default function InputPage() {
             setYear(mergedYears[mergedYears.length - 1])
             saveToLS(mergedForms, mergedYears)
 
-            // 2) отправим на бэк
             setBusy(true)
             await Api.importParams({ class:'B', data: Object.values(byYear) })
             alert('Импорт выполнен')
@@ -167,7 +183,7 @@ export default function InputPage() {
         }
     }
 
-    // Собираем payload из ВСЕХ лет формы
+    // === Расчёт ===
     const payloadAllYears = () => {
         const data = Object.values(forms).map(f => ({
             year: f.year,
@@ -189,8 +205,8 @@ export default function InputPage() {
     const computeAll = async () => {
         setBusy(true)
         try {
-            await Api.importParams(payloadAllYears())  // сохраняем все годы
-            await Api.computeAll()                     // запускаем расчёт
+            await Api.importParams(payloadAllYears())
+            await Api.computeAll()
             alert('Расчёт выполнен')
         } catch (err) {
             alert('Ошибка расчёта: ' + err.message)
@@ -199,6 +215,7 @@ export default function InputPage() {
         }
     }
 
+    // === UI ===
     return (
         <div className="grid two">
             {/* Левая колонка */}
@@ -207,6 +224,10 @@ export default function InputPage() {
                     <div>
                         <div className="text-muted" style={{marginBottom:6}}>Год</div>
                         <YearPicker years={years} value={year} onChange={setYear} />
+                        <div style={{display:'flex', gap:8, marginTop:8}}>
+                            <button className="btn small" onClick={addYear}>+ Добавить год</button>
+                            <button className="btn small danger" onClick={()=>removeYear(year)} disabled={years.length<=1}>Удалить год</button>
+                        </div>
                     </div>
 
                     <div>
@@ -231,12 +252,13 @@ export default function InputPage() {
                         <button className="btn" onClick={onImportClick} disabled={busy}>Импорт JSON</button>
                         <button className="btn" onClick={onExport} disabled={busy}>Экспорт JSON</button>
                         <button className="btn primary" onClick={computeAll} disabled={busy}>Рассчитать</button>
+                        <button className="btn danger" onClick={clearAll}>Очистить всё</button>
                         <input ref={fileRef} type="file" accept="application/json" style={{display:'none'}} onChange={onFileSelected}/>
                     </div>
                 </div>
             </div>
 
-            {/* Правая колонка — выбранная группа */}
+            {/* Правая колонка */}
             <div className="card">
                 <h3 style={{marginTop:0}}>Параметры</h3>
                 <div style={{display:'grid', gap:12, gridTemplateColumns:'repeat(2, minmax(160px, 1fr))'}}>
