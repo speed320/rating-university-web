@@ -46,5 +46,5 @@ export const Api = {
     getCalcByYear: (year) => request(`/api/b/calc/${year}`),
 
     //чистка
-    clearAll: () => fetch(`${base}/b/clear`, { method: 'DELETE' })
+    clearAll: () => fetch(`/api/b/clear`, { method: 'DELETE' })
 }
