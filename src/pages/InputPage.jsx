@@ -13,14 +13,29 @@ const template = (year) => ({
     beta211: 0, beta212: 0
 })
 
-const normalize = (r) => ({
-    year: Number.isFinite(+r?.year) ? +r.year : new Date().getFullYear(),
-    eNa: +r?.eNa || 0, eNb: +r?.eNb || 0, eNc: +r?.eNc || 0,
-    eb: +r?.eb || 0,   ec: +r?.ec || 0,
-    beta121: +r?.beta121 || 0, beta122: +r?.beta122 || 0,
-    beta131: +r?.beta131 || 0, beta132: +r?.beta132 || 0,
-    beta211: +r?.beta211 || 0, beta212: +r?.beta212 || 0
-})
+const pick = (obj, ...keys) => {
+    for (const k of keys) if (obj?.[k] !== undefined) return obj[k];
+    return 0;
+};
+const normalize = (r) => {
+    const y = Number.isFinite(+r?.year) ? +r.year : new Date().getFullYear();
+    return {
+        year: y,
+        // поддерживаем eNa ИЛИ ENa (и так далее)
+        eNa: +pick(r, 'eNa', 'ENa') || 0,
+        eNb: +pick(r, 'eNb', 'ENb') || 0,
+        eNc: +pick(r, 'eNc', 'ENc') || 0,
+        eb:  +pick(r, 'eb',  'Eb')  || 0,
+        ec:  +pick(r, 'ec',  'Ec')  || 0,
+
+        beta121: +pick(r, 'beta121', 'B121','b121') || 0,
+        beta122: +pick(r, 'beta122', 'B122','b122') || 0,
+        beta131: +pick(r, 'beta131', 'B131','b131') || 0,
+        beta132: +pick(r, 'beta132', 'B132','b132') || 0,
+        beta211: +pick(r, 'beta211', 'B211','b211') || 0,
+        beta212: +pick(r, 'beta212', 'B212','b212') || 0,
+    };
+};
 
 export default function InputPage() {
     const [busy, setBusy] = useState(false)
