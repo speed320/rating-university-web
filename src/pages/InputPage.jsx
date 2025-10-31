@@ -31,12 +31,11 @@ const template = (year) => ({
     beta211: 0, beta212: 0
 })
 
-// Универсальный выбор ключа (поддержка ENa/eNa, Eb/eb и т.п.)
+// поддержка различных ключей в импорте
 const pick = (obj, ...keys) => {
     for (const k of keys) if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k]
     return 0
 }
-
 const normalize = (r) => {
     const y = Number.isFinite(+r?.year) ? +r.year : new Date().getFullYear()
     return {
@@ -46,7 +45,6 @@ const normalize = (r) => {
         eNc: +pick(r, 'eNc', 'ENc') || 0,
         eb:  +pick(r, 'eb',  'Eb')  || 0,
         ec:  +pick(r, 'ec',  'Ec')  || 0,
-
         beta121: +pick(r, 'beta121', 'B121', 'b121') || 0,
         beta122: +pick(r, 'beta122', 'B122', 'b122') || 0,
         beta131: +pick(r, 'beta131', 'B131', 'b131') || 0,
@@ -66,12 +64,16 @@ export default function InputPage() {
     const [years, setYears] = useState(cached.years?.length ? cached.years : [initialYear])
     const [year, setYear] = useState(years[years.length - 1])
     const [forms, setForms] = useState(Object.keys(cached.forms || {}).length ? cached.forms : { [year]: template(year) })
-    const fileRef = useRef()
 
-    // сохраняем в localStorage при любых изменениях
+    const fileRef = useRef()
+    const [menuOpen, setMenuOpen] = useState(false)
+
+    // акцент цвета = цвет выбранного класса (пока активен B)
+    const accentStyle = { '--accent': klass === 'B' ? 'var(--primary)' : '#111827' }
+
     useEffect(() => { saveToLS(forms, years) }, [forms, years])
 
-    // подхватить с бэка
+    // подтянуть с бэка и слить с локальным
     useEffect(() => {
         Api.getParamsAll()
             .then(list => {
@@ -86,6 +88,7 @@ export default function InputPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // гарантия формы для выбранного года
     useEffect(() => {
         setForms(prev => (prev[year] ? prev : ({ ...prev, [year]: template(year) })))
         setYears(prev => Array.from(new Set([...prev, year])).sort((a,b)=>a-b))
@@ -104,24 +107,19 @@ export default function InputPage() {
         }
     }, [group])
 
-    // === Управление годами ===
-    const addYear = () => {
-        const y = Math.max(...years) + 1
-        setYears([...years, y])
-        setForms({ ...forms, [y]: template(y) })
-        setYear(y)
-    }
-
-    const removeYear = (y) => {
-        if (!window.confirm(`Удалить данные за ${y} год?`)) return
-        const nextYears = years.filter(v => v !== y)
+    // удалить текущий год
+    const removeCurrentYear = () => {
+        if (!window.confirm(`Удалить данные за ${year} год?`)) return
+        const nextYears = years.filter(v => v !== year)
         const nextForms = { ...forms }
-        delete nextForms[y]
-        setYears(nextYears)
-        setForms(nextForms)
-        if (year === y) setYear(nextYears[nextYears.length - 1] || initialYear)
+        delete nextForms[year]
+        setYears(nextYears.length ? nextYears : [initialYear])
+        setForms(nextYears.length ? nextForms : { [initialYear]: template(initialYear) })
+        setYear(nextYears.length ? nextYears[nextYears.length - 1] : initialYear)
+        setMenuOpen(false)
     }
 
+    // очистить все
     const clearAll = () => {
         if (!window.confirm('Очистить ВСЕ данные?')) return
         setForms({ [initialYear]: template(initialYear) })
@@ -129,10 +127,11 @@ export default function InputPage() {
         setYear(initialYear)
         localStorage.removeItem(LS_FORMS_KEY)
         localStorage.removeItem(LS_YEARS_KEY)
+        setMenuOpen(false)
     }
 
-    // === Импорт / Экспорт ===
-    const onImportClick = () => fileRef.current?.click()
+    // импорт/экспорт
+    const onImportClick = () => { fileRef.current?.click(); setMenuOpen(false) }
 
     const onFileSelected = async (e) => {
         const file = e.target.files?.[0]
@@ -180,10 +179,12 @@ export default function InputPage() {
             URL.revokeObjectURL(url)
         } catch (err) {
             alert('Ошибка экспорта: ' + err.message)
+        } finally {
+            setMenuOpen(false)
         }
     }
 
-    // === Расчёт ===
+    // расчёт по всем годам
     const payloadAllYears = () => {
         const data = Object.values(forms).map(f => ({
             year: f.year,
@@ -215,19 +216,14 @@ export default function InputPage() {
         }
     }
 
-    // === UI ===
     return (
-        <div className="grid two">
+        <div className="grid two" style={accentStyle}>
             {/* Левая колонка */}
             <div className="card">
                 <div className="list-vertical" style={{gap:16}}>
                     <div>
                         <div className="text-muted" style={{marginBottom:6}}>Год</div>
                         <YearPicker years={years} value={year} onChange={setYear} />
-                        <div style={{display:'flex', gap:8, marginTop:8}}>
-                            <button className="btn small" onClick={addYear}>+ Добавить год</button>
-                            <button className="btn small danger" onClick={()=>removeYear(year)} disabled={years.length<=1}>Удалить год</button>
-                        </div>
                     </div>
 
                     <div>
@@ -248,18 +244,30 @@ export default function InputPage() {
                         </div>
                     </div>
 
-                    <div className="toolbar">
-                        <button className="btn" onClick={onImportClick} disabled={busy}>Импорт JSON</button>
-                        <button className="btn" onClick={onExport} disabled={busy}>Экспорт JSON</button>
-                        <button className="btn primary" onClick={computeAll} disabled={busy}>Рассчитать</button>
-                        <button className="btn danger" onClick={clearAll}>Очистить всё</button>
-                        <input ref={fileRef} type="file" accept="application/json" style={{display:'none'}} onChange={onFileSelected}/>
+                    <div className="toolbar" style={{marginTop:8}}>
+                        <button className="btn primary lg" onClick={computeAll} disabled={busy} style={{width:'100%'}}>
+                            Рассчитать все годы
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Правая колонка */}
+            {/* Правая колонка — Параметры + меню */}
             <div className="card">
+                <div className="menu-root">
+                    <button className="btn icon" onClick={()=>setMenuOpen(v=>!v)} aria-label="Меню">
+                        ⋯
+                    </button>
+                    {menuOpen && (
+                        <div className="menu" onMouseLeave={()=>setMenuOpen(false)}>
+                            <button className="mi" onClick={onImportClick}>Импорт JSON…</button>
+                            <button className="mi" onClick={onExport}>Экспорт JSON</button>
+                            <button className="mi" onClick={removeCurrentYear}>Удалить текущий год</button>
+                            <button className="mi" onClick={clearAll}>Очистить всё</button>
+                        </div>
+                    )}
+                </div>
+
                 <h3 style={{marginTop:0}}>Параметры</h3>
                 <div style={{display:'grid', gap:12, gridTemplateColumns:'repeat(2, minmax(160px, 1fr))'}}>
                     {fields.map(([k, label]) => (
@@ -271,6 +279,10 @@ export default function InputPage() {
                         />
                     ))}
                 </div>
+
+                {/* скрытый инпут для импорта */}
+                <input ref={fileRef} type="file" accept="application/json"
+                       style={{display:'none'}} onChange={onFileSelected}/>
             </div>
         </div>
     )
