@@ -121,7 +121,7 @@ export default function InputPage() {
 
     // очистить все
     const clearAll = async () => {
-        if (!window.confirm('Очистить ВСЕ данные (включая сервер)?')) return
+        if (!window.confirm('Очистить ВСЕ данные?')) return
         setBusy(true)
         try {
             await Api.clearAll() // ← новый вызов на бэкенд
@@ -256,7 +256,7 @@ export default function InputPage() {
 
                     <div className="toolbar" style={{marginTop:8}}>
                         <button className="btn primary lg" onClick={computeAll} disabled={busy} style={{width:'100%'}}>
-                            Рассчитать все годы
+                            Рассчитать
                         </button>
                     </div>
                 </div>
