@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Api } from '../api';
 
 /**
  * rows: массив BCalcDto:
@@ -30,11 +31,35 @@ export default function ResultsTable({
         setEditValue('');
     };
 
-    const commitEdit = () => {
+    const commitEdit = async () => {
         if (!editingKey) return;
-        onMetricNamesChange({ [editingKey]: editValue || editingKey.toUpperCase() });
+
+        const patch = { [editingKey]: editValue || editingKey.toUpperCase() };
+        onMetricNamesChange(patch);
+
         setEditingKey(null);
         setEditValue('');
+
+        // --- ВАЖНО: сохраняем в БД ---
+        if (rows && rows.length > 0) {
+            const first = rows[0];
+            if (!first.calcResultId) {
+                console.warn('Нет calcResultId в первой строке, не могу сохранить названия');
+                return;
+            }
+            try {
+                await Api.updateMetricNames({
+                    calcResultId: first.calcResultId,
+                    codeB11: patch.codeB11 ?? metricNames.codeB11 ?? 'B11',
+                    codeB12: patch.codeB12 ?? metricNames.codeB12 ?? 'B12',
+                    codeB13: patch.codeB13 ?? metricNames.codeB13 ?? 'B13',
+                    codeB21: patch.codeB21 ?? metricNames.codeB21 ?? 'B21',
+                });
+            } catch (e) {
+                console.error('Ошибка сохранения названий метрик', e);
+                alert('Не удалось сохранить названия метрик');
+            }
+        }
     };
 
     const renderHeaderCell = (key, label) => (
