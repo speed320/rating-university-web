@@ -1,9 +1,9 @@
+// src/components/ResultsTable.jsx
 import React, { useState } from 'react';
-import { Api } from '../api';
 
 /**
  * rows: массив BCalcDto:
- *   { year, iteration, b11, b12, b13, b21, sumB, codeB11, codeB12, codeB13, codeB21, calcResultId }
+ *   { calcResultId, year, iteration, b11, b12, b13, b21, sumB, codeB11, codeB12, codeB13, codeB21 }
  *
  * metricNames: { codeB11, codeB12, codeB13, codeB21 }
  * onMetricNamesChange(patch): patch = { codeB11?: string, ... }
@@ -35,7 +35,10 @@ export default function ResultsTable({
         if (!editingKey) return;
 
         const patch = { [editingKey]: editValue || editingKey.toUpperCase() };
-        onMetricNamesChange(patch); // только сообщаем
+        console.log('commitEdit, patch = ', patch);
+
+        // 👉 только говорим родителю, что поменялось
+        onMetricNamesChange(patch);
 
         setEditingKey(null);
         setEditValue('');

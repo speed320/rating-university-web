@@ -1,3 +1,4 @@
+// src/pages/AnalyticsPage.jsx
 import React, { useEffect, useState } from 'react';
 import { Api } from '../api';
 import ResultsTable from '../components/ResultsTable.jsx';
@@ -38,12 +39,14 @@ export default function AnalyticsPage() {
                         codeB13: first.codeB13 || 'B13',
                         codeB21: first.codeB21 || 'B21',
                     });
+
                     const vis = {};
                     for (const r of data) vis[r.year] = true;
                     setVisibleYears(vis);
                 }
             })
-            .catch(() => {
+            .catch((e) => {
+                console.warn('Ошибка загрузки аналитики', e);
                 if (!cancelled) setRows([]);
             })
             .finally(() => {
@@ -55,12 +58,15 @@ export default function AnalyticsPage() {
         };
     }, []);
 
-    // обработчик изменения названия метрики из таблицы
+    // 🔥 ЕДИНСТВЕННОЕ место, где мы:
+    //  1) обновляем локальный стейт имён
+    //  2) посылаем запрос на бэкенд
     const handleMetricNamesChange = (patch) => {
+        console.log('handleMetricNamesChange patch = ', patch);
+
         setMetricNames((prev) => {
             const next = { ...prev, ...patch };
 
-            // пишем в БД – берём любой calcResultId
             const first = rows[0];
             if (first && first.calcResultId) {
                 Api.updateMetricNames({
@@ -70,7 +76,10 @@ export default function AnalyticsPage() {
                     codeB13: next.codeB13,
                     codeB21: next.codeB21,
                 }).catch((e) => console.warn('Ошибка сохранения имён метрик', e));
+            } else {
+                console.warn('Нет calcResultId, имена метрик не отправлены на сервер');
             }
+
             return next;
         });
     };
