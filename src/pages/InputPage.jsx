@@ -1,299 +1,420 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Api } from '../api.js'
-import ClassTabs from '../components/ClassTabs.jsx'
-import YearPicker from '../components/YearPicker.jsx'
-import NumericField, { parseLocaleFloat } from '../components/NumericField.jsx'
+import React, { useEffect, useRef, useState } from 'react';
+import { Api } from '../api';
+import YearPicker from '../components/YearPicker.jsx';
+import ClassTabs from '../components/ClassTabs.jsx';
+import GroupTabs from '../components/GroupTabs.jsx';
+import NumericField from '../components/NumericField.jsx';
 
-const LS_FORMS_KEY = 'unirating.forms.v1';
-const LS_YEARS_KEY = 'unirating.years.v1';
+const YEAR_NOW = new Date().getFullYear();
+const STORAGE_KEY = 'unirating_b_params_v2';
 
-const loadFromLS = () => {
-    try {
-        const forms = JSON.parse(localStorage.getItem(LS_FORMS_KEY) || '{}');
-        const years = JSON.parse(localStorage.getItem(LS_YEARS_KEY) || '[]');
-        return { forms, years };
-    } catch { return { forms: {}, years: [] }; }
+const DEFAULT_B_PARAMS = {
+    ENa: '',
+    ENb: '',
+    ENc: '',
+    Eb: '',
+    Ec: '',
+    beta121: '',
+    beta122: '',
+    beta131: '',
+    beta132: '',
+    beta211: '',
+    beta212: '',
 };
 
-const saveToLS = (forms, years) => {
-    try {
-        localStorage.setItem(LS_FORMS_KEY, JSON.stringify(forms || {}));
-        localStorage.setItem(LS_YEARS_KEY, JSON.stringify(years || []));
-    } catch {}
-};
-
-const template = (year) => ({
-    year,
-    eNa: 0, eNb: 0, eNc: 0,
-    eb: 0, ec: 0,
-    beta121: 0, beta122: 0,
-    beta131: 0, beta132: 0,
-    beta211: 0, beta212: 0
-})
-
-// поддержка различных ключей в импорте
-const pick = (obj, ...keys) => {
-    for (const k of keys) if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k]
-    return 0
+function normalizeNumber(v) {
+    if (v === '' || v == null) return null;
+    const n = Number(String(v).replace(',', '.'));
+    return Number.isNaN(n) ? null : n;
 }
-const normalize = (r) => {
-    const y = Number.isFinite(+r?.year) ? +r.year : new Date().getFullYear()
+
+function buildExportPayload(years, paramsB) {
+    const bData = years
+        .map((year) => {
+            const p = paramsB[year] || DEFAULT_B_PARAMS;
+            return {
+                year,
+                ENa: normalizeNumber(p.ENa),
+                ENb: normalizeNumber(p.ENb),
+                ENc: normalizeNumber(p.ENc),
+                Eb: normalizeNumber(p.Eb),
+                Ec: normalizeNumber(p.Ec),
+                beta121: normalizeNumber(p.beta121),
+                beta122: normalizeNumber(p.beta122),
+                beta131: normalizeNumber(p.beta131),
+                beta132: normalizeNumber(p.beta132),
+                beta211: normalizeNumber(p.beta211),
+                beta212: normalizeNumber(p.beta212),
+            };
+        })
+        .filter((row) => row.year);
+
     return {
-        year: y,
-        eNa: +pick(r, 'eNa', 'ENa') || 0,
-        eNb: +pick(r, 'eNb', 'ENb') || 0,
-        eNc: +pick(r, 'eNc', 'ENc') || 0,
-        eb:  +pick(r, 'eb',  'Eb')  || 0,
-        ec:  +pick(r, 'ec',  'Ec')  || 0,
-        beta121: +pick(r, 'beta121', 'B121', 'b121') || 0,
-        beta122: +pick(r, 'beta122', 'B122', 'b122') || 0,
-        beta131: +pick(r, 'beta131', 'B131', 'b131') || 0,
-        beta132: +pick(r, 'beta132', 'B132', 'b132') || 0,
-        beta211: +pick(r, 'beta211', 'B211', 'b211') || 0,
-        beta212: +pick(r, 'beta212', 'B212', 'b212') || 0,
-    }
+        classes: [
+            {
+                classType: 'B',
+                data: bData,
+            },
+        ],
+    };
 }
 
 export default function InputPage() {
-    const initialYear = new Date().getFullYear()
-    const cached = loadFromLS()
+    const [currentYear, setCurrentYear] = useState(YEAR_NOW);
+    const [years, setYears] = useState([YEAR_NOW]);
+    const [classType, setClassType] = useState('B');
+    const [group, setGroup] = useState(1);
+    const [paramsB, setParamsB] = useState({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
+    const [busy, setBusy] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const fileRef = useRef(null);
 
-    const [busy, setBusy] = useState(false)
-    const [klass, setKlass] = useState('B')
-    const [group, setGroup] = useState(1)
-    const [years, setYears] = useState(cached.years?.length ? cached.years : [initialYear])
-    const [year, setYear] = useState(years[years.length - 1])
-    const [forms, setForms] = useState(Object.keys(cached.forms || {}).length ? cached.forms : { [year]: template(year) })
-
-    const fileRef = useRef()
-    const [menuOpen, setMenuOpen] = useState(false)
-
-    // акцент цвета = цвет выбранного класса (пока активен B)
-    const accentStyle = { '--accent': klass === 'B' ? 'var(--primary)' : '#111827' }
-
-    useEffect(() => { saveToLS(forms, years) }, [forms, years])
-
-    // подтянуть с бэка и слить с локальным
+    // ---------------- 1. Загрузка на старте ----------------
     useEffect(() => {
-        Api.getParamsAll()
-            .then(list => {
-                if (!Array.isArray(list) || !list.length) return
-                const byYear = {}
-                for (const it of list) byYear[it.year] = normalize(it)
-                setForms(prev => ({ ...prev, ...byYear }))
-                const mergedYears = Array.from(new Set([...years, ...Object.keys(byYear).map(Number)])).sort((a,b)=>a-b)
-                setYears(mergedYears)
+        let hydratedFromStorage = false;
+
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (
+                    saved &&
+                    Array.isArray(saved.years) &&
+                    saved.years.length > 0 &&
+                    typeof saved.currentYear === 'number' &&
+                    typeof saved.paramsB === 'object'
+                ) {
+                    setYears(saved.years);
+                    setCurrentYear(saved.currentYear);
+                    setParamsB(saved.paramsB);
+                    hydratedFromStorage = true;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения состояния из localStorage', e);
+        }
+
+        if (hydratedFromStorage) return;
+
+        Api.getLastParamsB()
+            .then((block) => {
+                if (!block || !block.data || !block.data.length) return;
+                const map = {};
+                const ys = [];
+                for (const row of block.data) {
+                    ys.push(row.year);
+                    map[row.year] = {
+                        ENa: row.ENa ?? '',
+                        ENb: row.ENb ?? '',
+                        ENc: row.ENc ?? '',
+                        Eb: row.Eb ?? '',
+                        Ec: row.Ec ?? '',
+                        beta121: row.beta121 ?? '',
+                        beta122: row.beta122 ?? '',
+                        beta131: row.beta131 ?? '',
+                        beta132: row.beta132 ?? '',
+                        beta211: row.beta211 ?? '',
+                        beta212: row.beta212 ?? '',
+                    };
+                }
+                const uniqueYears = [...new Set(ys)].sort((a, b) => a - b);
+                setYears(uniqueYears);
+                setCurrentYear(uniqueYears[0]);
+                setParamsB(map);
             })
-            .catch(()=>{})
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+            .catch(() => {});
+    }, []);
 
-    // гарантия формы для выбранного года
+    // ---------------- 2. Автосохранение ----------------
     useEffect(() => {
-        setForms(prev => (prev[year] ? prev : ({ ...prev, [year]: template(year) })))
-        setYears(prev => Array.from(new Set([...prev, year])).sort((a,b)=>a-b))
-    }, [year])
-
-    const current = forms[year] || template(year)
-    const setField = (key, numVal) => setForms(prev => ({ ...prev, [year]: { ...(prev[year] || template(year)), [key]: numVal } }))
-
-    const fields = useMemo(() => {
-        switch (group) {
-            case 1: return [['eNa','ENa'], ['eNb','ENb'], ['eNc','ENc'], ['eb','Eb'], ['ec','Ec']]
-            case 2: return [['beta121','β121'], ['beta122','β122']]
-            case 3: return [['beta131','β131'], ['beta132','β132']]
-            case 4: return [['beta211','β211'], ['beta212','β212']]
-            default: return []
+        const payload = { years, currentYear, paramsB };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {
+            console.warn('Ошибка сохранения в localStorage', e);
         }
-    }, [group])
+    }, [years, currentYear, paramsB]);
 
-    // удалить текущий год
-    const removeCurrentYear = () => {
-        if (!window.confirm(`Удалить данные за ${year} год?`)) return
-        const nextYears = years.filter(v => v !== year)
-        const nextForms = { ...forms }
-        delete nextForms[year]
-        setYears(nextYears.length ? nextYears : [initialYear])
-        setForms(nextYears.length ? nextForms : { [initialYear]: template(initialYear) })
-        setYear(nextYears.length ? nextYears[nextYears.length - 1] : initialYear)
-        setMenuOpen(false)
-    }
+    const ensureYear = (year) => {
+        setYears((ys) => (ys.includes(year) ? ys : [...ys, year].sort((a, b) => a - b)));
+        setParamsB((state) => ({
+            ...state,
+            [year]: state[year] || { ...DEFAULT_B_PARAMS },
+        }));
+    };
 
-    // очистить все
+    const handleYearChange = (year) => {
+        ensureYear(year);
+        setCurrentYear(year);
+    };
+
+    const handleParamChange = (key, value) => {
+        setParamsB((state) => ({
+            ...state,
+            [currentYear]: {
+                ...(state[currentYear] || { ...DEFAULT_B_PARAMS }),
+                [key]: value,
+            },
+        }));
+    };
+
+    // ---------------- 3. Очистить всё ----------------
     const clearAll = async () => {
-        if (!window.confirm('Очистить ВСЕ данные?')) return
-        setBusy(true)
+        if (busy) return;
+        setBusy(true);
         try {
-            await Api.clearAll() // ← новый вызов на бэкенд
-            setForms({ [initialYear]: template(initialYear) })
-            setYears([initialYear])
-            setYear(initialYear)
-            localStorage.removeItem(LS_FORMS_KEY)
-            localStorage.removeItem(LS_YEARS_KEY)
-            alert('Данные полностью очищены')
-        } catch (err) {
-            alert('Ошибка очистки: ' + err.message)
+            setParamsB({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
+            setYears([YEAR_NOW]);
+            setCurrentYear(YEAR_NOW);
+            localStorage.removeItem(STORAGE_KEY);
+            await Api.clearCurrent();
+        } catch (e) {
+            alert('Ошибка очистки: ' + (e?.message || e));
         } finally {
-            setBusy(false)
-            setMenuOpen(false)
+            setBusy(false);
+            setMenuOpen(false);
         }
-    }
+    };
 
-
-    // импорт/экспорт
-    const onImportClick = () => { fileRef.current?.click(); setMenuOpen(false) }
-
-    const onFileSelected = async (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        try {
-            const text = await file.text()
-            const json = JSON.parse(text)
-            if (!json || json.class !== 'B' || !Array.isArray(json.data)) {
-                alert('Неверный JSON'); return
+    // Удалить только текущий год
+    const handleDeleteCurrentYear = () => {
+        setParamsB((prev) => {
+            const copy = { ...prev };
+            delete copy[currentYear];
+            if (!Object.keys(copy).length) {
+                copy[YEAR_NOW] = { ...DEFAULT_B_PARAMS };
             }
-            const byYear = {}
-            for (const it of json.data) {
-                const n = normalize(it)
-                byYear[n.year] = n
+            return copy;
+        });
+
+        setYears((prevYears) => {
+            const filtered = prevYears.filter((y) => y !== currentYear);
+            const finalYears = filtered.length ? filtered.sort((a, b) => a - b) : [YEAR_NOW];
+            setCurrentYear(finalYears[0]);
+            return finalYears;
+        });
+
+        setMenuOpen(false);
+    };
+
+    // ---------------- 4. Экспорт / импорт ----------------
+    const handleExport = () => {
+        try {
+            const payload = buildExportPayload(years, paramsB);
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], {
+                type: 'application/json;charset=utf-8',
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+
+            a.href = url;
+            a.download = `rating-params-${stamp}.json`;
+
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert('Ошибка экспорта: ' + (e?.message || e));
+        } finally {
+            setMenuOpen(false);
+        }
+    };
+
+    const handleImportClick = () => {
+        if (busy) return;
+        fileRef.current?.click();
+        setMenuOpen(false);
+    };
+
+    const handleFileSelected = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            if (!json || !Array.isArray(json.classes)) throw new Error('Неверный формат JSON');
+
+            const bBlock = json.classes.find((c) => c.classType === 'B');
+            if (!bBlock || !Array.isArray(bBlock.data)) throw new Error('Нет данных класса B');
+
+            const map = {};
+            const ys = [];
+            for (const row of bBlock.data) {
+                if (!row.year) continue;
+                ys.push(row.year);
+                map[row.year] = {
+                    ENa: row.ENa ?? '',
+                    ENb: row.ENb ?? '',
+                    ENc: row.ENc ?? '',
+                    Eb: row.Eb ?? '',
+                    Ec: row.Ec ?? '',
+                    beta121: row.beta121 ?? '',
+                    beta122: row.beta122 ?? '',
+                    beta131: row.beta131 ?? '',
+                    beta132: row.beta132 ?? '',
+                    beta211: row.beta211 ?? '',
+                    beta212: row.beta212 ?? '',
+                };
             }
-            const mergedForms = { ...forms, ...byYear }
-            const mergedYears = Array.from(new Set([...years, ...Object.keys(byYear).map(Number)])).sort((a,b)=>a-b)
-            setForms(mergedForms)
-            setYears(mergedYears)
-            setYear(mergedYears[mergedYears.length - 1])
-            saveToLS(mergedForms, mergedYears)
+            const uniqueYears = [...new Set(ys)].sort((a, b) => a - b);
+            if (!uniqueYears.length) throw new Error('Пустые данные');
 
-            setBusy(true)
-            await Api.importParams({ class:'B', data: Object.values(byYear) })
-            alert('Импорт выполнен')
+            setParamsB(map);
+            setYears(uniqueYears);
+            setCurrentYear(uniqueYears[0]);
+
+            const payload = {
+                years: uniqueYears,
+                currentYear: uniqueYears[0],
+                paramsB: map,
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+
+            alert('Импорт выполнен');
         } catch (err) {
-            alert('Ошибка импорта: ' + err.message)
+            alert('Ошибка импорта: ' + err.message);
         } finally {
-            setBusy(false)
-            e.target.value = ''
+            e.target.value = '';
         }
-    }
+    };
 
-    const onExport = async () => {
+    const handleAddYear = (year) => {
+        setYears((prev) =>
+            prev.includes(year) ? prev.slice().sort((a, b) => a - b) : [...prev, year].sort((a, b) => a - b),
+        );
+        setCurrentYear(year);
+        setParamsB((state) => ({
+            ...state,
+            [year]: state[year] || { ...DEFAULT_B_PARAMS },
+        }));
+    };
+
+    // ---------------- 5. Расчёт ----------------
+    const handleCompute = async () => {
+        setBusy(true);
         try {
-            const res = await Api.exportParamsRaw()
-            const blob = await res.blob()
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'b-params-export.json'
-            document.body.appendChild(a)
-            a.click()
-            a.remove()
-            URL.revokeObjectURL(url)
+            const payload = buildExportPayload(years, paramsB);
+            await Api.calcMulti(payload);
+            alert('Расчёт выполнен');
         } catch (err) {
-            alert('Ошибка экспорта: ' + err.message)
+            alert('Ошибка расчёта: ' + err.message);
         } finally {
-            setMenuOpen(false)
+            setBusy(false);
         }
-    }
+    };
 
-    // расчёт по всем годам
-    const payloadAllYears = () => {
-        const data = Object.values(forms).map(f => ({
-            year: f.year,
-            eNa: parseLocaleFloat(f.eNa),
-            eNb: parseLocaleFloat(f.eNb),
-            eNc: parseLocaleFloat(f.eNc),
-            eb:  parseLocaleFloat(f.eb),
-            ec:  parseLocaleFloat(f.ec),
-            beta121: parseLocaleFloat(f.beta121),
-            beta122: parseLocaleFloat(f.beta122),
-            beta131: parseLocaleFloat(f.beta131),
-            beta132: parseLocaleFloat(f.beta132),
-            beta211: parseLocaleFloat(f.beta211),
-            beta212: parseLocaleFloat(f.beta212),
-        }))
-        return { class:'B', data }
-    }
+    const params = paramsB[currentYear] || DEFAULT_B_PARAMS;
 
-    const computeAll = async () => {
-        setBusy(true)
-        try {
-            await Api.importParams(payloadAllYears())
-            await Api.computeAll()
-            alert('Расчёт выполнен')
-        } catch (err) {
-            alert('Ошибка расчёта: ' + err.message)
-        } finally {
-            setBusy(false)
-        }
-    }
+    const fieldsByGroup = {
+        1: [
+            ['ENa', 'ENa'],
+            ['ENb', 'ENb'],
+            ['ENc', 'ENc'],
+            ['Eb', 'Eb'],
+            ['Ec', 'Ec'],
+        ],
+        2: [
+            ['beta121', 'β121'],
+            ['beta122', 'β122'],
+        ],
+        3: [
+            ['beta131', 'β131'],
+            ['beta132', 'β132'],
+        ],
+        4: [
+            ['beta211', 'β211'],
+            ['beta212', 'β212'],
+        ],
+    };
 
     return (
-        <div className="grid two" style={accentStyle}>
-            {/* Левая колонка */}
-            <div className="card">
-                <div className="list-vertical" style={{gap:16}}>
-                    <div>
-                        <div className="text-muted" style={{marginBottom:6}}>Год</div>
-                        <YearPicker years={years} value={year} onChange={setYear} />
-                    </div>
-
-                    <div>
-                        <div className="text-muted" style={{marginBottom:6}}>Выбор класса</div>
-                        <ClassTabs value={klass} onChange={setKlass} />
-                    </div>
-
-                    <div>
-                        <div className="text-muted" style={{marginBottom:6}}>Выбор группы</div>
-                        <div className="group-tabs">
-                            {[1,2,3,4].map(id => (
-                                <div key={id}
-                                     className={`item ${group===id ? 'active' : ''}`}
-                                     onClick={()=>setGroup(id)}>
-                                    Группа {id}
+        <div className="card big-card">
+            <div className="card-header-row">
+                <div className="left-header">
+                    <YearPicker
+                        years={years}
+                        currentYear={currentYear}
+                        onYearChange={handleYearChange}
+                        onAddYear={handleAddYear}
+                    />
+                </div>
+                <div className="right-header">
+                    <div className="menu-wrapper">
+                        <div className="menu-dropdown">
+                            <button
+                                className="icon-btn menu-btn"
+                                type="button"
+                                disabled={busy}
+                                onClick={() => setMenuOpen((v) => !v)}
+                            >
+                                ⋯
+                            </button>
+                            {menuOpen && (
+                                <div className="menu-dropdown-list">
+                                    <button type="button" onClick={handleImportClick}>
+                                        Импорт JSON
+                                    </button>
+                                    <button type="button" onClick={handleExport}>
+                                        Экспорт JSON
+                                    </button>
+                                    <button type="button" onClick={handleDeleteCurrentYear}>
+                                        Удалить текущий год
+                                    </button>
+                                    <button type="button" onClick={clearAll}>
+                                        Очистить всё
+                                    </button>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    </div>
 
-                    <div className="toolbar" style={{marginTop:8}}>
-                        <button className="btn primary lg" onClick={computeAll} disabled={busy} style={{width:'100%'}}>
-                            Рассчитать
-                        </button>
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept="application/json"
+                            style={{ display: 'none' }}
+                            onChange={handleFileSelected}
+                        />
                     </div>
                 </div>
             </div>
 
-            {/* Правая колонка — Параметры + меню */}
-            <div className="card">
-                <div className="menu-root">
-                    <button className="btn icon" onClick={()=>setMenuOpen(v=>!v)} aria-label="Меню">
-                        ⋯
-                    </button>
-                    {menuOpen && (
-                        <div className="menu" onMouseLeave={()=>setMenuOpen(false)}>
-                            <button className="mi" onClick={onImportClick}>Импорт JSON…</button>
-                            <button className="mi" onClick={onExport}>Экспорт JSON</button>
-                            <button className="mi" onClick={removeCurrentYear}>Удалить текущий год</button>
-                            <button className="mi" onClick={clearAll}>Очистить всё</button>
-                        </div>
-                    )}
+            <div className="card-body input-grid">
+                <div className="left-col">
+                    <h2>Выбор класса</h2>
+                    <ClassTabs value={classType} onChange={setClassType} />
+
+                    <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
+                    <GroupTabs value={group} onChange={setGroup} />
                 </div>
 
-                <h3 style={{marginTop:0}}>Параметры</h3>
-                <div style={{display:'grid', gap:12, gridTemplateColumns:'repeat(2, minmax(160px, 1fr))'}}>
-                    {fields.map(([k, label]) => (
-                        <NumericField
-                            key={k}
-                            label={label}
-                            value={current[k]}
-                            onChange={(n)=>setField(k, n)}
-                        />
-                    ))}
+                <div className="right-col">
+                    <h2>Параметры</h2>
+                    <div className="params-grid">
+                        {fieldsByGroup[group].map(([key, label]) => (
+                            <NumericField
+                                key={key}
+                                label={label}
+                                value={params[key]}
+                                onChange={(v) => handleParamChange(key, v)}
+                            />
+                        ))}
+                    </div>
                 </div>
+            </div>
 
-                {/* скрытый инпут для импорта */}
-                <input ref={fileRef} type="file" accept="application/json"
-                       style={{display:'none'}} onChange={onFileSelected}/>
+            <div className="card-footer">
+                <button
+                    className="primary-btn big-btn"
+                    disabled={busy}
+                    onClick={handleCompute}
+                >
+                    Рассчитать
+                </button>
             </div>
         </div>
-    )
+    );
 }

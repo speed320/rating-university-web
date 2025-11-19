@@ -1,57 +1,72 @@
+import React from 'react';
 import {
-    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-    Legend, Tooltip, ResponsiveContainer
-} from 'recharts'
+    RadarChart,
+    Radar,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
+    Legend,
+    Tooltip,
+} from 'recharts';
 
-const PALETTE = [
-    '#2563eb', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#14b8a6', '#f97316', '#22c55e'
-]
+/**
+ * rows: активные строки (учитывая чекбоксы)
+ * metricNames: { codeB11, codeB12, codeB13, codeB21 }
+ */
+export default function RadarBlock({ rows, metricNames }) {
+    if (!rows || !rows.length) {
+        return (
+            <div className="card radar-card">
+                <h3>Паучья диаграмма</h3>
+                <p>Нет данных для диаграммы</p>
+            </div>
+        );
+    }
 
-// Ожидает dataYears: [{year, B11,B12,B13,B21}, ...] — по одной записи на год (последняя итерация)
-export default function RadarBlock({ dataYears }) {
-    const metrics = ['B11','B12','B13','B21']
+    const metrics = [
+        { key: 'b11', label: metricNames.codeB11 || 'B11' },
+        { key: 'b12', label: metricNames.codeB12 || 'B12' },
+        { key: 'b13', label: metricNames.codeB13 || 'B13' },
+        { key: 'b21', label: metricNames.codeB21 || 'B21' },
+    ];
 
-    const years = (dataYears || [])
-        .map(x => x.year)
-        .filter((v,i,a)=>a.indexOf(v)===i)
-        .sort((a,b)=>a-b)
+    // данные вида:
+    // [{ metric: 'B11', y_2024: ..., y_2025: ... }, ...]
+    const data = metrics.map((m) => {
+        const row = { metric: m.label };
+        rows.forEach((r) => {
+            row[`y_${r.year}`] = r[m.key];
+        });
+        return row;
+    });
 
-    // Общая таблица: [{ metric:'B11', '2024':12.3, '2025':9.1 }, ...]
-    const base = metrics.map(m => {
-        const row = { metric: m }
-        for (const y of years) {
-            const rec = (dataYears || []).find(r => r.year === y)
-            row[String(y)] = rec ? (+rec[m] || 0) : 0
-        }
-        return row
-    })
+    const COLORS = ['#2563EB', '#22C55E', '#F97316', '#E11D48', '#0EA5E9', '#A855F7'];
 
     return (
-        <div className="card">
-            <h3 style={{marginTop:0}}>Паучья диаграмма (B11, B12, B13, B21)</h3>
-            <div style={{height:360}}>
-                <ResponsiveContainer>
-                    <RadarChart outerRadius="75%" data={base}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="metric" />
-                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} />
-                        <Tooltip formatter={(v)=> (typeof v === 'number' ? v.toFixed(2) : v)} />
-                        <Legend />
-                        {years.map((y, idx) => (
-                            <Radar
-                                key={y}
-                                name={String(y)}
-                                dataKey={String(y)}
-                                stroke={PALETTE[idx % PALETTE.length]}
-                                fill={PALETTE[idx % PALETTE.length]}
-                                strokeOpacity={0.9}
-                                fillOpacity={0.25}
-                            />
-                        ))}
-                    </RadarChart>
-                </ResponsiveContainer>
-            </div>
+        <div className="card radar-card">
+            <h3>Паучья диаграмма</h3>
+            <RadarChart
+                width={400}
+                height={300}
+                data={data}
+                outerRadius="70%"
+            >
+                <PolarGrid />
+                <PolarAngleAxis dataKey="metric" />
+                <PolarRadiusAxis />
+                <Tooltip />
+                <Legend />
+                {rows.map((r, idx) => (
+                    <Radar
+                        key={r.year}
+                        name={String(r.year)}
+                        dataKey={`y_${r.year}`}
+                        stroke={COLORS[idx % COLORS.length]}
+                        fill={COLORS[idx % COLORS.length]}
+                        fillOpacity={0.3}
+                    />
+                ))}
+            </RadarChart>
         </div>
-    )
+    );
 }

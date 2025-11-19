@@ -1,21 +1,26 @@
-export default function ClassTabs({ value='B', onChange }) {
-    const items = [
-        { id:'A', label:'Класс А', disabled:true },
-        { id:'B', label:'Класс Б', disabled:false },
-        { id:'V', label:'Класс В', disabled:true },
-    ]
+import React from 'react';
+
+export default function ClassTabs({ value, onChange }) {
+    const tabs = [
+        { id: 'A', label: 'Класс А' },
+        { id: 'B', label: 'Класс Б' },
+        { id: 'V', label: 'Класс В' },
+    ];
+
     return (
-        <div className="list-vertical">
-            {items.map(it => (
-                <div
-                    key={it.id}
-                    className={`item ${value===it.id ? 'active' : ''}`}
-                    onClick={() => !it.disabled && onChange?.(it.id)}
-                    style={it.disabled ? {opacity:.6, cursor:'not-allowed'} : {}}
+        <div className="tabs-vertical">
+            {tabs.map((t) => (
+                <button
+                    key={t.id}
+                    type="button"
+                    className={
+                        'tab-btn ' + (value === t.id ? 'tab-btn-active' : '')
+                    }
+                    onClick={() => onChange && onChange(t.id)}
                 >
-                    {it.label}
-                </div>
+                    {t.label}
+                </button>
             ))}
         </div>
-    )
+    );
 }

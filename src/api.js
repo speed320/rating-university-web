@@ -1,50 +1,115 @@
-const BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
-function ensureBase() {
-    if (!BASE) {
-        throw new Error('VITE_API_BASE не задан. Укажи адрес бэкенда в .env.development/.env.production')
-    }
-}
+async function request(path, options = {}) {
+    const resp = await fetch(API_BASE + path, {
+        credentials: 'include', // важное: куки-сессия
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {}),
+        },
+        ...options,
+    });
 
-async function request(path, opts = {}) {
-    ensureBase()
-    let res
-    try {
-        res = await fetch(BASE + path, {
-            headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-            ...opts
-        })
-    } catch (e) {
-        throw new Error('Сеть недоступна или CORS: ' + e.message)
+    if (resp.status === 204) return null;
+
+    const isJson = resp.headers.get('content-type')?.includes('application/json');
+    const data = isJson ? await resp.json().catch(() => null) : null;
+
+    if (!resp.ok) {
+        const message = data?.message || data?.error || resp.statusText;
+        throw new Error(message || `HTTP ${resp.status}`);
     }
-    if (!res.ok) {
-        const text = await res.text().catch(()=>'')
-        throw new Error(`${res.status} ${res.statusText}${text ? ' — '+text : ''}`)
-    }
-    const ct = res.headers.get('content-type') || ''
-    return ct.includes('application/json') ? res.json() : res.text()
+    return data;
 }
 
 export const Api = {
-    // параметры
-    getParamsAll: () => request('/api/b/params'),
-    importParams: (bundle) => request('/api/b/import', { method: 'POST', body: JSON.stringify(bundle) }),
-
-    // расчёт
-    computeAll: () => request('/api/b/calc', { method: 'POST' }),
-
-    // экспорт потоком
-    async exportParamsRaw() {
-        ensureBase()
-        const res = await fetch(BASE + '/api/b/export')
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-        return res
+    // ---------- AUTH ----------
+    async register({ name, email, password }) {
+        return request('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ name, email, password }),
+        });
     },
 
-    // результаты
-    getCalcAll: () => request('/api/b/calc'),
-    getCalcByYear: (year) => request(`/api/b/calc/${year}`),
+    async login({ email, password }) {
+        return request('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+        });
+    },
 
-    //чистка
-    clearAll: () => fetch(`/api/b/clear`, { method: 'DELETE' })
-}
+    async logout() {
+        return request('/api/auth/logout', { method: 'POST' });
+    },
+
+    async me() {
+        return request('/api/auth/me', { method: 'GET' });
+    },
+
+    // ---------- RATING / PARAMS / CALC ----------
+
+    /**
+     * Сохранить параметры по всем классам и пересчитать.
+     * Сейчас реально используется только класс B.
+     *
+     * payload: {
+     *   classes: [
+     *     { classType: "B", data: [ {year, ENa, ENb, ...}, ... ] }
+     *   ]
+     * }
+     */
+    async calcMulti(payload) {
+        return request('/api/rating/calc-multi', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    /** Экспорт последних параметров по всем классам (MultiClassParamsRequestDto). */
+    async exportParams() {
+        return request('/api/rating/export', { method: 'GET' });
+    },
+
+    /** Сбросить текущую итерацию пользователя (очистка текущих данных, но не истории). */
+    async clearCurrent() {
+        return request('/api/rating/clear-current', { method: 'POST' });
+    },
+
+    /** Последние введённые параметры по классу B. */
+    async getLastParamsB() {
+        return request('/api/b/params/last', { method: 'GET' });
+    },
+
+    /** Последние расчёты по B. */
+    async getLastCalcB() {
+        return request('/api/b/calc/last', { method: 'GET' });
+    },
+
+    /** История по всем классам (когда реализуешь на бэке). Пока можем не вызывать. */
+    async getHistoryAll() {
+        return request('/api/rating/history', { method: 'GET' });
+    },
+
+    async clearHistory() {
+        return request('/api/rating/history', {method: 'DELETE'});
+    },
+
+    /** История только по B (текущий эндпоинт). */
+    async getHistoryB() {
+        return request('/api/b/history', { method: 'GET' });
+    },
+
+    /** Обновить названия метрик для конкретного результата. */
+    async updateMetricNames(dto) {
+        // dto: { calcResultId, codeB11, codeB12, codeB13, codeB21 }
+        return request('/api/b/metric-names', {
+            method: 'PUT',
+            body: JSON.stringify(dto),
+        });
+    },
+
+    /** Параметры класса B для конкретной итерации */
+    async getParamsBByIter(iter) {
+        return request(`/api/b/params/iter/${iter}`, { method: 'GET' });
+    }
+};

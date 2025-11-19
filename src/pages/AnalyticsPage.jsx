@@ -1,65 +1,119 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Api } from '../api.js'
-import ResultsTable from '../components/ResultsTable.jsx'
-import RadarBlock from '../components/RadarBlock.jsx'
-import TotalLineBlock from '../components/TotalLineBlock.jsx'
+import React, { useEffect, useState } from 'react';
+import { Api } from '../api';
+import ResultsTable from '../components/ResultsTable.jsx';
+import RadarBlock from '../components/RadarBlock.jsx';
+import TotalLineBlock from '../components/TotalLineBlock.jsx';
 
 export default function AnalyticsPage() {
-    const [items, setItems] = useState([])
-    const [year, setYear] = useState('')
+    const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const load = async (y) => {
-        const data = y ? await Api.getCalcByYear(parseInt(y,10)) : await Api.getCalcAll()
-        // /api/b/calc/{year} у тебя, вероятно, возвращает один элемент; превратим в массив
-        setItems(Array.isArray(data) ? data : (data ? [data] : []))
+    // названия метрик (общие для всех лет)
+    const [metricNames, setMetricNames] = useState({
+        codeB11: 'B11',
+        codeB12: 'B12',
+        codeB13: 'B13',
+        codeB21: 'B21',
+    });
+
+    // какие годы отображать (true = показываем)
+    const [visibleYears, setVisibleYears] = useState({});
+
+    // грузим последний расчёт класса B
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+
+        Api.getLastCalcB()
+            .then((block) => {
+                if (cancelled) return;
+                const data = block?.data || [];
+                setRows(data);
+
+                if (data.length) {
+                    const first = data[0];
+                    setMetricNames({
+                        codeB11: first.codeB11 || 'B11',
+                        codeB12: first.codeB12 || 'B12',
+                        codeB13: first.codeB13 || 'B13',
+                        codeB21: first.codeB21 || 'B21',
+                    });
+                    const vis = {};
+                    for (const r of data) vis[r.year] = true;
+                    setVisibleYears(vis);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setRows([]);
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // обработчик изменения названия метрики из таблицы
+    const handleMetricNamesChange = (patch) => {
+        setMetricNames((prev) => {
+            const next = { ...prev, ...patch };
+
+            // пишем в БД – берём любой calcResultId
+            const first = rows[0];
+            if (first && first.calcResultId) {
+                Api.updateMetricNames({
+                    calcResultId: first.calcResultId,
+                    codeB11: next.codeB11,
+                    codeB12: next.codeB12,
+                    codeB13: next.codeB13,
+                    codeB21: next.codeB21,
+                }).catch((e) => console.warn('Ошибка сохранения имён метрик', e));
+            }
+            return next;
+        });
+    };
+
+    // включить/выключить год
+    const handleToggleYear = (year) => {
+        setVisibleYears((prev) => ({
+            ...prev,
+            [year]: !prev[year],
+        }));
+    };
+
+    if (loading) {
+        return <div className="card big-card">Загрузка...</div>;
     }
 
-    useEffect(() => { load() }, [])
+    if (!rows.length) {
+        return (
+            <div className="card big-card">
+                <h2>Аналитика</h2>
+                <p>Нет данных для отображения. Сначала выполните расчёт.</p>
+            </div>
+        );
+    }
 
-    const allYears = useMemo(() =>
-            Array.from(new Set(items.map(i => i.year))).sort((a,b)=>a-b)
-        , [items])
-
-    const filtered = useMemo(() => {
-        if (!year) return items
-        return items.filter(i => String(i.year) === String(year))
-    }, [items, year])
-
-    // для радара хотим отрисовать сразу все годы (или выбранный)
-    const radarData = useMemo(() => {
-        const src = year ? items.filter(i => String(i.year)===String(year)) : items
-        // если пришло несколько итераций — оставим последнюю для каждого года
-        const byYear = new Map()
-        for (const it of src) {
-            const prev = byYear.get(it.year)
-            if (!prev || (it.iteration > prev.iteration)) byYear.set(it.year, it)
-        }
-        return Array.from(byYear.values()).sort((a,b)=>a.year-b.year)
-    }, [items, year])
-
-    // для линии берём по одному значению total на год (последняя итерация)
-    const totalSeries = radarData.map(r => ({ year: r.year, totalB: r.totalB }))
+    // строки, которые реально показываем в графиках
+    const activeRows = rows.filter((r) => visibleYears[r.year]);
 
     return (
-        <div className="grid" style={{gap:16}}>
-            <div className="card">
-                <div className="toolbar">
-                    <h3 style={{margin:0}}>Аналитика и визуализация</h3>
-                    <span className="spacer"></span>
-                    <select className="input small" value={year} onChange={e=>setYear(e.target.value)}>
-                        <option value="">Все годы</option>
-                        {allYears.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                    <button className="btn" onClick={()=>load(year)}>Обновить</button>
-                </div>
+        <div className="card big-card analytics-layout">
+            <div className="analytics-left">
+                <ResultsTable
+                    rows={rows}
+                    metricNames={metricNames}
+                    onMetricNamesChange={handleMetricNamesChange}
+                    visibleYears={visibleYears}
+                    onToggleYear={handleToggleYear}
+                />
             </div>
-
-            <ResultsTable items={filtered} />
-
-            <div className="grid equal">
-                <RadarBlock dataYears={radarData} />
-                <TotalLineBlock series={totalSeries} />
+            <div className="analytics-right">
+                <RadarBlock rows={activeRows} metricNames={metricNames} />
+                <TotalLineBlock rows={activeRows} />
             </div>
         </div>
-    )
+    );
 }

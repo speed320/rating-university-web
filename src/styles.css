@@ -1,55 +1,500 @@
-:root { color-scheme: light; }
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #f5f7fb; color:#0f172a; }
-
-/* базовые токены */
-:root {
-    --radius: 8px;
-    --border: 1px solid #e5e7eb;
-    --bg-card: #fff;
-    --primary: #2563eb;           /* акцент (Класс B) */
-    --brand: #0f172a;
-    --accent: var(--primary);     /* меняем динамически через inline-style */
+.app-root {
+    min-height: 100vh;
+    background: #e4edff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 32px;
+    background: #f7f9ff;
+}
 
-.nav { position: sticky; top:0; z-index:10; background:#fff; border-bottom:var(--border); }
-.nav-inner { display:flex; gap:24px; align-items:center; padding:12px 16px; }
-.brand { font-weight:700; letter-spacing:.2px; color:var(--brand); }
-.nav a { text-decoration:none; color:#0f172a; padding:8px 10px; border-radius:var(--radius); }
-.nav a.active { background:#e6eeff; }
+.logo-text {
+    font-weight: 600;
+    font-size: 20px;
+    margin-right: 32px;
+}
 
-.card { position: relative; background:var(--bg-card); border:var(--border); border-radius:var(--radius); padding:16px; box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+.top-nav {
+    display: flex;
+    gap: 24px;
+}
 
-.grid { display:grid; gap:16px; }
-.grid.two { grid-template-columns: 320px 1fr; }
+.top-nav-link {
+    text-decoration: none;
+    font-size: 15px;
+    color: #555;
+}
 
-.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-.btn { padding:10px 14px; border:var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; }
-.btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
-.btn.lg { padding:14px 18px; font-size:16px; font-weight:600; }
-.btn.small { padding:8px 10px; font-size:13px; }
-.btn.icon { padding:8px; width:36px; height:36px; display:grid; place-items:center; }
+.top-nav-link.active,
+.top-nav-link:hover {
+    color: #295bcc;
+}
 
-.input, .select { width:100%; padding:10px 12px; border:var(--border); border-radius:var(--radius); background:#fff; }
-.text-muted { color:#6b7280; font-size:12px; }
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-.list-vertical { display:grid; gap:10px; }
-.list-vertical .item { border:var(--border); border-radius:var(--radius); padding:10px 12px; background:#fff; cursor:pointer; }
-.list-vertical .item.active { background:#e6eeff; border-color:#c7d2fe; }
+.user-name {
+    font-size: 14px;
+    color: #555;
+}
 
-.group-tabs { display:grid; gap:10px; }
-.group-tabs .item { border:var(--border); border-radius:var(--radius); padding:10px 12px; background:#fff; cursor:pointer; }
-.group-tabs .item.active { background:#e6eeff; border-color:#c7d2fe }
+.icon-btn {
+    border: none;
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    background: #dee6ff;
+    cursor: pointer;
+}
 
-.table { width:100%; border-collapse: collapse; }
-.table th,.table td { border:var(--border); padding:10px; }
-.table th { background:#f8fafc; text-align:left; }
+.page-body {
+    padding: 32px;
+}
 
-/* выпадающее меню в правом верхнем углу карточки */
-.card .menu-root { position:absolute; top:10px; right:10px; }
-.menu { position:absolute; top:42px; right:0; background:#fff; border:var(--border); border-radius:var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.08); min-width:200px; padding:6px; }
-.menu .mi { display:flex; width:100%; padding:10px 12px; background:#fff; border:none; border-radius:6px; text-align:left; cursor:pointer; }
-.menu .mi:hover { background:#f3f4f6; }
+.card {
+    background: #f8fbff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+
+.big-card {
+    padding: 24px 32px 32px;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+}
+
+.left-col h2,
+.right-col h2 {
+    margin-bottom: 16px;
+}
+
+.tabs-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tab-btn {
+    border-radius: 6px;
+    border: 1px solid #e2e7ff;
+    padding: 10px 16px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.tab-btn-active {
+    background: #e6eeff;
+    border-color: #c7d2fe;
+}
+
+.params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.num-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.num-label {
+    font-size: 14px;
+}
+
+.num-input {
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid #dde2f0;
+    padding: 0 10px;
+    background: #fafbff;
+}
+
+.card-footer {
+    margin-top: 24px;
+}
+
+.primary-btn {
+    background: #295bcc;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.big-btn {
+    width: 100%;
+    padding: 12px 0;
+    font-size: 16px;
+}
+
+.year-select {
+    border-radius: 6px;
+    padding: 6px 10px;
+    border: 1px solid #dde2f0;
+}
+
+.menu-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+/* auth pages */
+
+.auth-page {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 360px;
+    background: #f8fbff;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.auth-title {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.auth-input {
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid #dde2f0;
+    padding: 0 10px;
+    background: #fff;
+}
+
+.auth-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 0;
+}
+
+.auth-error {
+    color: #c00;
+    font-size: 13px;
+}
+
+.auth-sub {
+    margin-top: 12px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* table & history */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.table th,
+.table td {
+    border: 1px solid #e2e7ff;
+    padding: 8px 10px;
+    text-align: center;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-item {
+    border-radius: 12px;
+    border: 1px solid #e2e7ff;
+    padding: 12px 16px;
+    background: #fff;
+}
+
+.history-main {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.history-title {
+    font-weight: 500;
+}
+
+.history-classes {
+    font-size: 13px;
+    color: #555;
+}
+
+.history-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.history-chip {
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: #e6eeff;
+    font-size: 13px;
+}
+
+
+/* Блок выбора года */
+.year-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-select {
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 14px;
+    outline: none;
+}
+
+.year-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+}
+
+/* Кнопка "+" рядом с выбором года */
+.year-add-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.05s ease;
+}
+
+.year-add-button:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+}
+
+.year-add-button:active {
+    transform: translateY(1px);
+}
+
+/* Модалка добавления года */
+.year-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.year-modal {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 24px 32px 28px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+    min-width: 360px;
+}
+
+.year-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.year-modal-title {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.year-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.year-modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    font-size: 14px;
+    margin-bottom: 20px;
+    outline: none;
+}
+
+.year-modal-input:focus {
+    border-color: #4f46e5;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.15);
+}
+
+.year-modal-submit {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: #2156c8;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease,
+    box-shadow 0.15s ease;
+}
+
+.year-modal-submit:hover {
+    background: #1e4db3;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+.year-modal-submit:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+/* Вертикальные вкладки классов и групп */
+.tabs-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tab-btn {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    font-size: 18px;           /* крупнее текст */
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+    background: #f3f4ff;
+}
+
+.tab-btn-active {
+    background: #e0ebff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+}
+
+/* Меню в правом верхнем углу */
+.menu-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.menu-dropdown {
+    position: relative;
+}
+
+.menu-btn {
+    font-size: 24px;
+    line-height: 1;
+    padding: 4px 10px;
+}
+
+.menu-dropdown-list {
+    position: absolute;
+    right: 0;
+    top: 110%;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+    padding: 6px 0;
+    min-width: 220px;
+    z-index: 50;
+}
+
+.menu-dropdown-list button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.menu-dropdown-list button:hover {
+    background: #eef2ff;
+}
+.results-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th,
+.results-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e3e7f0;
+    text-align: center;
+}
+
+.results-table th:first-child,
+.results-table td:first-child {
+    text-align: left;
+}
+
+.results-table .clickable-header {
+    cursor: pointer;
+    text-decoration: underline dotted;
+}

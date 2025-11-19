@@ -1,35 +1,103 @@
-export default function ResultsTable({ items }) {
+import React, { useState } from 'react';
+
+/**
+ * rows: массив BCalcDto:
+ *   { year, iteration, b11, b12, b13, b21, sumB, codeB11, codeB12, codeB13, codeB21, calcResultId }
+ *
+ * metricNames: { codeB11, codeB12, codeB13, codeB21 }
+ * onMetricNamesChange(patch): patch = { codeB11?: string, ... }
+ *
+ * visibleYears: { [year]: boolean }
+ * onToggleYear(year): переключить чекбокс
+ */
+export default function ResultsTable({
+                                         rows,
+                                         metricNames,
+                                         onMetricNamesChange,
+                                         visibleYears,
+                                         onToggleYear,
+                                     }) {
+    const [editingKey, setEditingKey] = useState(null);
+    const [editValue, setEditValue] = useState('');
+
+    const startEdit = (key, current) => {
+        setEditingKey(key);
+        setEditValue(current);
+    };
+
+    const cancelEdit = () => {
+        setEditingKey(null);
+        setEditValue('');
+    };
+
+    const commitEdit = () => {
+        if (!editingKey) return;
+        onMetricNamesChange({ [editingKey]: editValue || editingKey.toUpperCase() });
+        setEditingKey(null);
+        setEditValue('');
+    };
+
+    const renderHeaderCell = (key, label) => (
+        <th>
+            {editingKey === key ? (
+                <input
+                    className="metric-edit-input"
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={commitEdit}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitEdit();
+                        if (e.key === 'Escape') cancelEdit();
+                    }}
+                />
+            ) : (
+                <button
+                    type="button"
+                    className="metric-header-btn"
+                    onClick={() => startEdit(key, label)}
+                    title="Изменить название метрики"
+                >
+                    {label}
+                </button>
+            )}
+        </th>
+    );
+
     return (
-        <div className="card">
-            <h3 style={{marginTop:0}}>Таблица рассчитанных значений</h3>
-            <div style={{overflowX:'auto'}}>
-                <table className="table">
-                    <thead>
-                    <tr>
-                        <th>Год</th>
-                        <th>B11</th>
-                        <th>B12</th>
-                        <th>B13</th>
-                        <th>B21</th>
-                        <th>Total B</th>
+        <div className="results-table-wrapper">
+            <table className="results-table">
+                <thead>
+                <tr>
+                    <th>Год</th>
+                    {renderHeaderCell('codeB11', metricNames.codeB11 || 'B11')}
+                    {renderHeaderCell('codeB12', metricNames.codeB12 || 'B12')}
+                    {renderHeaderCell('codeB13', metricNames.codeB13 || 'B13')}
+                    {renderHeaderCell('codeB21', metricNames.codeB21 || 'B21')}
+                    <th>Total B</th>
+                    <th>Показать</th>
+                </tr>
+                </thead>
+                <tbody>
+                {rows.map((r) => (
+                    <tr key={`${r.year}-${r.iteration}`}>
+                        <td>{r.year}</td>
+                        <td>{r.b11.toFixed(2)}</td>
+                        <td>{r.b12.toFixed(2)}</td>
+                        <td>{r.b13.toFixed(2)}</td>
+                        <td>{r.b21.toFixed(2)}</td>
+                        <td>{r.sumB.toFixed(2)}</td>
+                        <td style={{ textAlign: 'center' }}>
+                            <input
+                                type="checkbox"
+                                checked={!!visibleYears[r.year]}
+                                onChange={() => onToggleYear(r.year)}
+                            />
+                        </td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    {items?.length ? items.map((r,i)=>(
-                        <tr key={i}>
-                            <td>{r.year}</td>
-                            <td>{(+r.B11).toFixed(2)}</td>
-                            <td>{(+r.B12).toFixed(2)}</td>
-                            <td>{(+r.B13).toFixed(2)}</td>
-                            <td>{(+r.B21).toFixed(2)}</td>
-                            <td><strong>{(+r.totalB).toFixed(2)}</strong></td>
-                        </tr>
-                    )) : (
-                        <tr><td colSpan="7" style={{textAlign:'center',opacity:.7,padding:16}}>Нет данных</td></tr>
-                    )}
-                    </tbody>
-                </table>
-            </div>
+                ))}
+                </tbody>
+            </table>
         </div>
-    )
+    );
 }
