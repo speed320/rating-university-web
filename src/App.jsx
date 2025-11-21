@@ -6,6 +6,7 @@ import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import HistoryPage from './pages/HistoryPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -91,7 +92,12 @@ export default function App() {
 
     return (
         <AuthContext.Provider value={authValue}>
-            <AppShell>
+        {loading? (
+            <div className="loading-overlay">
+                <ClipLoader size={50} color={"#3498db"} loading={true}/>
+                <div className="loading-text">Пожалуйста, подождите...</div>
+            </div>
+        ):(    <AppShell>
                 <Routes>
                     <Route
                         path="/"
@@ -133,6 +139,7 @@ export default function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </AppShell>
+            )}
         </AuthContext.Provider>
     );
 }
