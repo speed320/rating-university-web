@@ -527,3 +527,48 @@
     font-family: Arial, sans-serif; /* Шрифт текста */
     text-align: center; /* Выравнивание по центру */
 }
+
+/* Основной стиль для спиннера */
+.spinner-border {
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: #ffffff; /* Цвет верхней части */
+    width: 1.5rem; /* Ширина */
+    height: 1.5rem; /* Высота */
+    animation: spinner-border 0.75s linear infinite; /* Анимация вращения */
+}
+
+/* Маленький спиннер (spinner-border-sm) */
+.spinner-border-sm {
+    width: 1rem; /* Меньше, чем стандартный */
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* Анимация вращения спиннера */
+@keyframes spinner-border {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Для кнопки "Войти" */
+.auth-btn {
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 8px;
+    border: none;
+    color: #fff;
+    font-size: var(--font-size-medium);
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
