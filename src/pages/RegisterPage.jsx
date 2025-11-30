@@ -70,9 +70,18 @@ export default function RegisterPage() {
                         required
                     />
                     {error && <div className="auth-error">{error}</div>}
-                    <button className="primary-btn auth-btn" disabled={busy}>
-                        Регистрация
+                    <button className="primary-btn auth-btn" type="submit" disabled={busy}>
+                        {busy ? (
+                            <>
+                                <span className='spinner-border spinner-border-sm mr-2' role="status" aria-hidden="true"> </span>
+                                Регистрация...
+                            </>
+                        ) : (
+                            'Регистрация'
+                        )}
+
                     </button>
+
                 </form>
                 <div className="auth-sub">
                     Уже есть аккаунт? <Link to="/login">Войти</Link>
