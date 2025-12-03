@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Api } from '../api';
+import {useNavigate} from "react-router-dom";
 import YearPicker from '../components/YearPicker.jsx';
 import ClassTabs from '../components/ClassTabs.jsx';
 import GroupTabs from '../components/GroupTabs.jsx';
 import NumericField from '../components/NumericField.jsx';
-
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const YEAR_NOW = new Date().getFullYear();
 const STORAGE_KEY = 'unirating_b_params_v2';
 
@@ -68,6 +70,7 @@ export default function InputPage() {
     const [busy, setBusy] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const fileRef = useRef(null);
+    const navigate = useNavigate();
 
     // ---------------- 1. Загрузка на старте ----------------
     useEffect(() => {
@@ -297,9 +300,15 @@ export default function InputPage() {
     const handleCompute = async () => {
         setBusy(true);
         try {
+            const delay = 1500;
             const payload = buildExportPayload(years, paramsB);
             await Api.calcMulti(payload);
-            alert('Расчёт выполнен');
+            toast.success('Расчёт выполнен',
+                {autoClose: delay,
+                        onClose: () => {
+                            navigate('/analytics'); // редирект после закрытия тоста
+                        }
+                });
         } catch (err) {
             alert('Ошибка расчёта: ' + err.message);
         } finally {
@@ -421,6 +430,7 @@ export default function InputPage() {
 
                 </button>
             </div>
+            <ToastContainer position="bottom-right" />
         </div>
     );
 }

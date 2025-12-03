@@ -281,6 +281,7 @@
 
 /* Блок выбора года */
 .year-picker {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -330,19 +331,21 @@
 .year-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    /*background: rgba(15, 23, 42, 0.15);*/
     z-index: 1000;
 }
 
 .year-modal {
+    position: absolute;
+    top: 100%; /* сразу под кнопкой "+" */
+    left: 0;   /* совпадает с левым краем кнопки */
+    transform: translateX(0); /* можно не писать */
     background: #ffffff;
-    border-radius: 18px;
-    padding: 24px 32px 28px;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
-    min-width: 360px;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 1010; /* выше backdrop */
+    min-width: 200px;
 }
 
 .year-modal-header {
@@ -505,7 +508,56 @@
 }
 
 /* Для контейнера с загрузкой */
-/* Универсальная кнопка с крутилкой */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8); /* Прозрачный фон */
+    display: flex;
+    flex-direction: column; /* Размещаем элементы по вертикали */
+    justify-content: center; /* Центрируем по вертикали */
+    align-items: center; /* Центрируем по горизонтали */
+    z-index: 9999; /* Поверх всех элементов */
+}
+
+/* Стили для текста */
+.loading-text {
+    margin-top: 10px; /* Отступ сверху */
+    font-size: 18px; /* Размер текста */
+    color: #333; /* Цвет текста */
+    font-family: Arial, sans-serif; /* Шрифт текста */
+    text-align: center; /* Выравнивание по центру */
+}
+
+/* Основной стиль для спиннера */
+.spinner-border {
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: #ffffff; /* Цвет верхней части */
+    width: 1.5rem; /* Ширина */
+    height: 1.5rem; /* Высота */
+    animation: spinner-border 0.75s linear infinite; /* Анимация вращения */
+}
+
+/* Маленький спиннер (spinner-border-sm) */
+.spinner-border-sm {
+    width: 1rem; /* Меньше, чем стандартный */
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* Анимация вращения спиннера */
+@keyframes spinner-border {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 .spinner-btn {
     padding: 12px 16px; /* Отступы */
     border-radius: 8px;
@@ -522,29 +574,3 @@
     transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
-/* Основной стиль для спиннера */
-.spinner-border {
-    border: 2px solid transparent;
-    border-radius: 50%;
-    border-top-color: #ffffff;
-    width: 1.5rem;
-    height: 1.5rem;
-    animation: spinner-border 0.75s linear infinite;
-}
-
-/* Маленький спиннер */
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    border-width: 2px;
-}
-
-/* Анимация вращения */
-@keyframes spinner-border {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
