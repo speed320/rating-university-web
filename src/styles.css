@@ -505,60 +505,9 @@
 }
 
 /* Для контейнера с загрузкой */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.8); /* Прозрачный фон */
-    display: flex;
-    flex-direction: column; /* Размещаем элементы по вертикали */
-    justify-content: center; /* Центрируем по вертикали */
-    align-items: center; /* Центрируем по горизонтали */
-    z-index: 9999; /* Поверх всех элементов */
-}
-
-/* Стили для текста */
-.loading-text {
-    margin-top: 10px; /* Отступ сверху */
-    font-size: 18px; /* Размер текста */
-    color: #333; /* Цвет текста */
-    font-family: Arial, sans-serif; /* Шрифт текста */
-    text-align: center; /* Выравнивание по центру */
-}
-
-/* Основной стиль для спиннера */
-.spinner-border {
-    border: 2px solid transparent;
-    border-radius: 50%;
-    border-top-color: #ffffff; /* Цвет верхней части */
-    width: 1.5rem; /* Ширина */
-    height: 1.5rem; /* Высота */
-    animation: spinner-border 0.75s linear infinite; /* Анимация вращения */
-}
-
-/* Маленький спиннер (spinner-border-sm) */
-.spinner-border-sm {
-    width: 1rem; /* Меньше, чем стандартный */
-    height: 1rem;
-    border-width: 2px;
-}
-
-/* Анимация вращения спиннера */
-@keyframes spinner-border {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Для кнопки "Войти" */
-.auth-btn {
-    width: 100%;
-    padding: 12px 0;
+/* Универсальная кнопка с крутилкой */
+.spinner-btn {
+    padding: 12px 16px; /* Отступы */
     border-radius: 8px;
     border: none;
     color: #fff;
@@ -569,6 +518,33 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
+    position: relative; /* Для спиннера, чтобы он не выходил за пределы кнопки */
     transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
+/* Основной стиль для спиннера */
+.spinner-border {
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    width: 1.5rem;
+    height: 1.5rem;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+/* Маленький спиннер */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* Анимация вращения */
+@keyframes spinner-border {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

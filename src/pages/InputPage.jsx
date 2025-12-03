@@ -408,11 +408,17 @@ export default function InputPage() {
 
             <div className="card-footer">
                 <button
-                    className="primary-btn big-btn"
+                    className="primary-btn big-btn spinner-btn"
                     disabled={busy}
                     onClick={handleCompute}
                 >
-                    Рассчитать
+                    {busy?(
+                        <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>Считаем =)</span>
+                        </>
+                    ):('Рассчитать')}
+
                 </button>
             </div>
         </div>

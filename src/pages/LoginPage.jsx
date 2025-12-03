@@ -53,7 +53,7 @@ export default function LoginPage() {
                     />
                     {error && <div className="auth-error">{error}</div>}
                     <button
-                        className="primary-btn auth-btn"
+                        className="primary-btn spinner-btn"
                         type="submit"
                         disabled={busy}
                     >

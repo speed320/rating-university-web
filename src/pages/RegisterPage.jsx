@@ -83,7 +83,7 @@ export default function RegisterPage() {
                         required
                     />
                     {error && <div className="auth-error">{error}</div>}
-                    <button className="primary-btn auth-btn" type="submit" disabled={busy || passError}>
+                    <button className="primary-btn spinner-btn" type="submit" disabled={busy || passError}>
                         {busy ? (
                             <>
                                 <span className='spinner-border spinner-border-sm mr-2' role="status" aria-hidden="true"> </span>
