@@ -1,5 +1,3 @@
-// javascript
-// `src/pages/InputPage.jsx`
 import React, { useEffect, useRef, useState } from 'react';
 import { Api } from '../api';
 import { useNavigate } from "react-router-dom";
@@ -29,8 +27,8 @@ const DEFAULT_B_PARAMS = {
 
 const DEFAULT_NAMES = {
     codeClassA: 'Класс A',
-    codeClassB: 'Класс B',
-    codeClassC: 'Класс C',
+    codeClassB: 'Класс Б',
+    codeClassC: 'Класс В',
     codeB11: 'Группа 1',
     codeB12: 'Группа 2',
     codeB13: 'Группа 3',
@@ -43,7 +41,6 @@ function normalizeNumber(v) {
     return Number.isNaN(n) ? null : n;
 }
 
-// ИСПРАВЛЕНО: используем плоские поля names.*, без names.code.*
 function buildExportPayload(years, paramsB, names) {
     const bData = years
         .map((year) => {
@@ -94,7 +91,6 @@ export default function InputPage() {
     const [busy, setBusy] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
 
-    // НОВОЕ: цель редактирования и модалка
     const [editTarget, setEditTarget] = useState(null); // { type: 'class'|'group', key: string, value: string }
     const [namesEditorOpen, setNamesEditorOpen] = useState(false);
 
@@ -110,16 +106,14 @@ export default function InputPage() {
                 if (
                     saved &&
                     Array.isArray(saved.years) &&
-                    saved.years.length > 0 &&
                     typeof saved.currentYear === 'number' &&
-                    typeof saved.paramsB === 'object'
+                    typeof saved.paramsB === 'object' &&
+                    typeof saved.names === 'object'
                 ) {
                     setYears(saved.years);
                     setCurrentYear(saved.currentYear);
                     setParamsB(saved.paramsB);
-                    if (saved.names && typeof saved.names === 'object') {
-                        setNames({ ...DEFAULT_NAMES, ...saved.names });
-                    }
+                    setNames({ ...DEFAULT_NAMES, ...saved.names });
                     hydratedFromStorage = true;
                 }
             }
@@ -323,14 +317,12 @@ export default function InputPage() {
         }));
     };
 
-    // Открыть редактор для текущего класса
     const openNameEditorForClass = () => {
         const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassC';
         setEditTarget({ type: 'class', key, value: names[key] || '' });
         setNamesEditorOpen(true);
     };
 
-    // Открыть редактор для текущей группы
     const openNameEditorForGroup = () => {
         const map = { 1: 'codeB11', 2: 'codeB12', 3: 'codeB13', 4: 'codeB21' };
         const key = map[group];
@@ -338,7 +330,6 @@ export default function InputPage() {
         setNamesEditorOpen(true);
     };
 
-    // Закрыть модалку
     const closeNamesEditor = () => {
         setNamesEditorOpen(false);
         setEditTarget(null);
@@ -438,6 +429,7 @@ export default function InputPage() {
                     <h2>Выбор класса</h2>
                     <div className="tabs-with-edit">
                         <ClassTabs
+                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassC}`}
                             value={classType}
                             onChange={setClassType}
                             onDoubleClick={renameActiveClassByDblClick}
@@ -462,6 +454,7 @@ export default function InputPage() {
                     <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
                     <div className="tabs-with-edit">
                         <GroupTabs
+                            key={`group-tabs-${names.codeB11}-${names.codeB12}-${names.codeB13}-${names.codeB21}`}
                             value={group}
                             onChange={setGroup}
                             onDoubleClick={renameActiveGroupByDblClick}
@@ -517,7 +510,6 @@ export default function InputPage() {
 
             <ToastContainer position="bottom-right" />
 
-            {/* КРАСИВАЯ ЦЕНТРАЛЬНАЯ МОДАЛКА ДЛЯ ИЗМЕНЕНИЯ НАЗВАНИЯ */}
             {namesEditorOpen && editTarget && (
                 <div
                     className="modal-backdrop"
@@ -551,7 +543,11 @@ export default function InputPage() {
                             <input
                                 type="text"
                                 value={editTarget.value}
-                                onChange={(e) => setEditTarget((t) => ({ ...t, value: e.target.value }))}
+                                onChange={(e) => {
+                                    const newValue = e.target.value;
+                                    setEditTarget((t) => ({ ...t, value: newValue }));
+                                    setNames((n) => ({ ...n, [editTarget.key]: newValue }));
+                                }}
                                 style={{
                                     padding: '10px 12px',
                                     border: '1px solid #ccc',
@@ -569,10 +565,7 @@ export default function InputPage() {
                             <button
                                 type="button"
                                 className="primary-btn"
-                                onClick={() => {
-                                    setNames((n) => ({ ...n, [editTarget.key]: editTarget.value.trim() }));
-                                    closeNamesEditor();
-                                }}
+                                onClick={closeNamesEditor}
                                 disabled={!editTarget.value.trim()}
                             >
                                 Сохранить
