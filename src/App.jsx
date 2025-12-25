@@ -7,7 +7,7 @@ import HistoryPage from './pages/HistoryPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ClipLoader from 'react-spinners/ClipLoader';
-
+import logoutIcon from './assets/icons/logout-1.svg'
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
@@ -46,8 +46,8 @@ function AppShell({ children }) {
                 {user && (
                     <div className="top-bar-right">
                         <span className="user-name">{user.name}</span>
-                        <button className="icon-btn" onClick={handleLogout} title="Выйти">
-                            ⎋
+                        <button className="icon-btn logout-btn" onClick={handleLogout} title="Выйти">
+                            <img src={logoutIcon} alt={"sdf"}/>
                         </button>
                     </div>
                 )}

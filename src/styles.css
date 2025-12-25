@@ -5,7 +5,7 @@
 }
 .app-root {
     min-height: 100vh;
-    background: #e4edff;
+    background: #dce9ff;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -58,7 +58,14 @@
     background: #dee6ff;
     cursor: pointer;
 }
-
+.logout-btn{
+    background: rgb(223, 223, 223);
+    padding: 4px;
+}
+.icon-btn img {
+    width: 100%;  /* Изображение займет 100% ширины кнопки */
+    height: 100%; /* Изображение займет 100% высоты кнопки */
+}
 .page-body {
     padding: 32px;
 }
@@ -281,7 +288,6 @@
 
 /* Блок выбора года */
 .year-picker {
-    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -331,21 +337,19 @@
 .year-modal-backdrop {
     position: fixed;
     inset: 0;
-    /*background: rgba(15, 23, 42, 0.15);*/
+    background: rgba(15, 23, 42, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1000;
 }
 
 .year-modal {
-    position: absolute;
-    top: 100%; /* сразу под кнопкой "+" */
-    left: 0;   /* совпадает с левым краем кнопки */
-    transform: translateX(0); /* можно не писать */
     background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 1010; /* выше backdrop */
-    min-width: 200px;
+    border-radius: 18px;
+    padding: 24px 32px 28px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+    min-width: 360px;
 }
 
 .year-modal-header {
@@ -449,10 +453,25 @@
     position: relative;
 }
 
+/* Стиль для кнопки с классом menu-btn */
 .menu-btn {
-    font-size: 24px;
-    line-height: 1;
-    padding: 4px 10px;
+    padding-bottom: 3px;
+    display: flex;              /* Включаем Flexbox */
+    justify-content: center;    /* Центрируем содержимое по горизонтали */
+    align-items: center;        /* Центрируем содержимое по вертикали */
+    width: 40px;                /* Ширина кнопки */
+    height: 40px;               /* Высота кнопки */
+    background: rgb(223, 223, 223);  /* Цвет фона */
+    border: none;               /* Убираем границу */
+    border-radius: 50%;         /* Круглая кнопка */
+    font-size: 24px;            /* Размер шрифта */
+                /* Цвет текста (или символа) */
+    cursor: pointer;           /* Курсор при наведении */
+}
+
+.menu-btn:disabled {
+    background-color: #ddd;    /* Цвет кнопки при disabled */
+    cursor: not-allowed;       /* Курсор при disabled */
 }
 
 .menu-dropdown-list {
