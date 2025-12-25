@@ -89,6 +89,7 @@ export default function InputPage() {
     const [names, setNames] = useState({ ...DEFAULT_NAMES });
     const [busy, setBusy] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
     const [namesEditorOpen, setNamesEditorOpen] = useState(false);
     const fileRef = useRef(null);
     const navigate = useNavigate();
@@ -327,29 +328,26 @@ export default function InputPage() {
     };
 
     // ---------------- 5. Редактор названий ----------------
-    const openNamesEditor = () => {
+    const openNameEditorForClass = () => {
+        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassC';
+        setEditTarget({ type: 'class', key, value: names[key] || '' });
         setNamesEditorOpen(true);
-        setMenuOpen(false)
-    };
-    const closeNamesEditor = () => setNamesEditorOpen(false)
-
-    const renameActiveClassByDblClick = () => {
-        const key = classType === 'A' ? 'codeClassA' :
-            classType === 'B' ? 'codeClassB' : 'codeClassV';
-        const next = window.prompt('Новое название класса', names[key]);
-        if (next != null) {
-            setNames((n) => ({ ...n, [key]: next }));
-        }
     };
 
-    const renameActiveGroupByDblClick = () => {
+    const openNameEditorForGroup = () => {
         const map = { 1: 'codeB11', 2: 'codeB12', 3: 'codeB13', 4: 'codeB21' };
         const key = map[group];
-        const next = window.prompt('Новое название группы', names[key]);
-        if (next != null) {
-            setNames((n) => ({ ...n, [key]: next }));
-        }
+        setEditTarget({ type: 'group', key, value: names[key] || '' });
+        setNamesEditorOpen(true);
     };
+
+    const closeNamesEditor = () => {
+        setNamesEditorOpen(false);
+        setEditTarget(null);
+    };
+
+    const renameActiveClassByDblClick = () => openNameEditorForClass();
+    const renameActiveGroupByDblClick = () => openNameEditorForGroup();
 
 
     // ---------------- 6. Расчёт ----------------
@@ -455,19 +453,18 @@ export default function InputPage() {
                             value={classType}
                             onChange={setClassType}
                             onDoubleClick={renameActiveClassByDblClick}
-                            // при желании можно пробросить названия во внутренний рендер табов:
                             names={{
                                 A: names.codeClassA,
                                 B: names.codeClassB,
-                                V: names.codeClassV,
+                                C: names.codeClassC,
                             }}
                         />
                         <button
                             type="button"
                             className="icon-btn edit-mini-btn"
                             aria-label="Редактировать название класса"
-                            onClick={openNamesEditor}
-                            title="Изменить названия"
+                            onClick={openNameEditorForClass}
+                            title="Изменить название"
                             style={{ marginLeft: 8 }}
                         >
                             ✎
@@ -492,8 +489,8 @@ export default function InputPage() {
                             type="button"
                             className="icon-btn edit-mini-btn"
                             aria-label="Редактировать название группы"
-                            onClick={openNamesEditor}
-                            title="Изменить названия"
+                            onClick={openNameEditorForGroup}
+                            title="Изменить название"
                             style={{ marginLeft: 8 }}
                         >
                             ✎
@@ -533,56 +530,32 @@ export default function InputPage() {
             </div>
             <ToastContainer position="bottom-right" />
 
-            {namesEditorOpen && (
+            {namesEditorOpen && editTarget && (
                 <div className="modal-backdrop" onClick={closeNamesEditor}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>Изменение названий</h3>
+                        <h3>{editTarget.type === 'class' ? 'Изменение названия класса' : 'Изменение названия группы'}</h3>
                         <div className="form-grid">
-                            <label>codeClassA</label>
+                            <label>{editTarget.key}</label>
                             <input
                                 type="text"
-                                value={names.codeClassA}
-                                onChange={(e) => setNames((n) => ({ ...n, codeClassA: e.target.value }))}
-                            />
-                            <label>codeClassB</label>
-                            <input
-                                type="text"
-                                value={names.codeClassB}
-                                onChange={(e) => setNames((n) => ({ ...n, codeClassB: e.target.value }))}
-                            />
-                            <label>codeClassV</label>
-                            <input
-                                type="text"
-                                value={names.codeClassV}
-                                onChange={(e) => setNames((n) => ({ ...n, codeClassV: e.target.value }))}
-                            />
-                            <label>codeB11</label>
-                            <input
-                                type="text"
-                                value={names.codeB11}
-                                onChange={(e) => setNames((n) => ({ ...n, codeB11: e.target.value }))}
-                            />
-                            <label>codeB12</label>
-                            <input
-                                type="text"
-                                value={names.codeB12}
-                                onChange={(e) => setNames((n) => ({ ...n, codeB12: e.target.value }))}
-                            />
-                            <label>codeB13</label>
-                            <input
-                                type="text"
-                                value={names.codeB13}
-                                onChange={(e) => setNames((n) => ({ ...n, codeB13: e.target.value }))}
-                            />
-                            <label>codeB21</label>
-                            <input
-                                type="text"
-                                value={names.codeB21}
-                                onChange={(e) => setNames((n) => ({ ...n, codeB21: e.target.value }))}
+                                value={editTarget.value}
+                                onChange={(e) =>
+                                    setEditTarget((t) => ({ ...t, value: e.target.value }))
+                                }
                             />
                         </div>
                         <div className="modal-actions">
-                            <button type="button" onClick={closeNamesEditor}>Закрыть</button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    // ИСПРАВЛЕНО: сохраняем конкретное поле в names
+                                    setNames((n) => ({ ...n, [editTarget.key]: editTarget.value }));
+                                    closeNamesEditor();
+                                }}
+                            >
+                                Сохранить
+                            </button>
+                            <button type="button" onClick={closeNamesEditor}>Отмена</button>
                         </div>
                     </div>
                 </div>
