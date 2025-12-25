@@ -27,8 +27,9 @@
 
         return (
             <div className="app-root">
+                {user && (
                 <header className="top-bar">
-                    <div className="top-bar-left">
+
                         <span className="logo-text">Рейтинг</span>
                         {user && (
                             <nav className="top-nav">
@@ -60,7 +61,7 @@
                                 </NavLink>
                             </nav>
                         )}
-                    </div>
+
                     {user && (
                         <div className="top-bar-right">
                             <span className="user-name">{user.name}</span>
@@ -69,7 +70,7 @@
                             </button>
                         </div>
                     )}
-                </header>
+                </header>)}
                 <main className="page-body">{children}</main>
             </div>
         );

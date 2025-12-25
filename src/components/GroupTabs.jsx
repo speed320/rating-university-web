@@ -21,7 +21,7 @@ export default function GroupTabs({ value, onChange, onDoubleClick, names }) {
                 <button
                     key={g.id}
                     type="button"
-                    className={'tab-btn ' + (value === g.id ? 'tab-btn-active' : '')}
+                    className={'tab-btn group-btn ' + (value === g.id ? 'group-btn-active' : '')}
                     onClick={() => onChange && onChange(g.id)}
                     onDoubleClick={() => onDoubleClick && onDoubleClick(g.id)}
                     title={g.label}
