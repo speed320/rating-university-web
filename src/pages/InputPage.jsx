@@ -547,11 +547,11 @@ export default function InputPage() {
                             boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                         }}
                     >
-                        <h3 style={{ marginTop: 0 }}>
+                        <h3 style={{ marginTop: 0, marginBottom:12 }}>
                             {editTarget.type === 'class' ? 'Изменение названия класса' : 'Изменение названия группы'}
                         </h3>
                         <div className="form-grid" style={{ display: 'grid', gap: 12 }}>
-                            <label style={{ fontSize: 12, color: '#666' }}>{editTarget.key}</label>
+                            {/*<label style={{ fontSize: 12, color: '#666' }}>{editTarget.key}</label>*/}
                             <input
                                 type="text"
                                 value={editTarget.value}
@@ -573,10 +573,10 @@ export default function InputPage() {
                             className="modal-actions"
                             style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}
                         >
-                            <button type="button" onClick={closeNamesEditor}>Отмена</button>
+                            <button type="button" className="cancel-btn" onClick={closeNamesEditor}>Отмена</button>
                             <button
                                 type="button"
-                                className="primary-btn"
+                                className="save-btn"
                                 onClick={closeNamesEditor}
                                 disabled={!editTarget.value.trim()}
                             >
