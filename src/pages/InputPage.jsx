@@ -318,7 +318,7 @@ export default function InputPage() {
     };
 
     const openNameEditorForClass = () => {
-        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassC';
+        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassV';
         setEditTarget({ type: 'class', key, value: names[key] || '' });
         setNamesEditorOpen(true);
     };
