@@ -24,13 +24,23 @@ const DEFAULT_B_PARAMS = {
     beta212: '',
 };
 
+const DEFAULT_NAMES = {
+    codeClassA: 'Класс A',
+    codeClassB: 'Класс B',
+    codeClassC: 'Класс C',
+    codeB11: 'Группа 1',
+    codeB12: 'Группа 2',
+    codeB13: 'Группа 3',
+    codeB21: 'Группа 4',
+}
+
 function normalizeNumber(v) {
     if (v === '' || v == null) return null;
     const n = Number(String(v).replace(',', '.'));
     return Number.isNaN(n) ? null : n;
 }
 
-function buildExportPayload(years, paramsB) {
+function buildExportPayload(years, paramsB, names) {
     const bData = years
         .map((year) => {
             const p = paramsB[year] || DEFAULT_B_PARAMS;
@@ -56,6 +66,15 @@ function buildExportPayload(years, paramsB) {
             {
                 classType: 'B',
                 data: bData,
+                names: {
+                    codeClassA: names.code.codeClassA || '',
+                    codeClassB: names.code.codeClassB || '',
+                    codeClassC: names.code.codeClassC || '',
+                    codeB11: names.code.codeB11 || '',
+                    codeB12: names.code.codeB12 || '',
+                    codeB13: names.code.codeB13 || '',
+                    codeB21: names.code.codeB21 || '',
+                }
             },
         ],
     };
@@ -67,8 +86,10 @@ export default function InputPage() {
     const [classType, setClassType] = useState('B');
     const [group, setGroup] = useState(1);
     const [paramsB, setParamsB] = useState({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
+    const [names, setNames] = useState({ ...DEFAULT_NAMES });
     const [busy, setBusy] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [namesEditorOpen, setNamesEditorOpen] = useState(false);
     const fileRef = useRef(null);
     const navigate = useNavigate();
 
@@ -90,6 +111,9 @@ export default function InputPage() {
                     setYears(saved.years);
                     setCurrentYear(saved.currentYear);
                     setParamsB(saved.paramsB);
+                    if (saved.names && typeof saved.names === 'object') {
+                        setNames({...DEFAULT_NAMES, ...saved.names});
+                    }
                     hydratedFromStorage = true;
                 }
             }
@@ -130,13 +154,13 @@ export default function InputPage() {
 
     // ---------------- 2. Автосохранение ----------------
     useEffect(() => {
-        const payload = { years, currentYear, paramsB };
+        const payload = { years, currentYear, paramsB, names };
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         } catch (e) {
             console.warn('Ошибка сохранения в localStorage', e);
         }
-    }, [years, currentYear, paramsB]);
+    }, [years, currentYear, paramsB, names]);
 
     const ensureYear = (year) => {
         setYears((ys) => (ys.includes(year) ? ys : [...ys, year].sort((a, b) => a - b)));
@@ -169,6 +193,7 @@ export default function InputPage() {
             setParamsB({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
             setYears([YEAR_NOW]);
             setCurrentYear(YEAR_NOW);
+            setNames({ ...DEFAULT_NAMES });
             localStorage.removeItem(STORAGE_KEY);
             await Api.clearCurrent();
         } catch (e) {
@@ -203,7 +228,7 @@ export default function InputPage() {
     // ---------------- 4. Экспорт / импорт ----------------
     const handleExport = () => {
         try {
-            const payload = buildExportPayload(years, paramsB);
+            const payload = buildExportPayload(years, paramsB, names);
 
             const blob = new Blob([JSON.stringify(payload, null, 2)], {
                 type: 'application/json;charset=utf-8',
@@ -270,10 +295,15 @@ export default function InputPage() {
             setYears(uniqueYears);
             setCurrentYear(uniqueYears[0]);
 
+            if(bBlock.names && typeof bBlock.names === 'object'){
+                setNames({...DEFAULT_NAMES, ...bBlock.names});
+            }
+
             const payload = {
                 years: uniqueYears,
                 currentYear: uniqueYears[0],
                 paramsB: map,
+                names: bBlock.names || names,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
@@ -296,12 +326,38 @@ export default function InputPage() {
         }));
     };
 
-    // ---------------- 5. Расчёт ----------------
+    // ---------------- 5. Редактор названий ----------------
+    const openNamesEditor = () => {
+        setNamesEditorOpen(true);
+        setMenuOpen(false)
+    };
+    const closeNameEditor = () => setNamesEditorOpen(false)
+
+    const renameActiveClassByDblClick = () => {
+        const key = classType === 'A' ? 'codeClassA' :
+            classType === 'B' ? 'codeClassB' : 'codeClassV';
+        const next = window.prompt('Новое название класса', names[key]);
+        if (next != null) {
+            setNames((n) => ({ ...n, [key]: next }));
+        }
+    };
+
+    const renameActiveGroupByDblClick = () => {
+        const map = { 1: 'codeB11', 2: 'codeB12', 3: 'codeB13', 4: 'codeB21' };
+        const key = map[group];
+        const next = window.prompt('Новое название группы', names[key]);
+        if (next != null) {
+            setNames((n) => ({ ...n, [key]: next }));
+        }
+    };
+
+
+    // ---------------- 6. Расчёт ----------------
     const handleCompute = async () => {
         setBusy(true);
         try {
             const delay = 1500;
-            const payload = buildExportPayload(years, paramsB);
+            const payload = buildExportPayload(years, paramsB, names);
             await Api.calcMulti(payload);
             toast.success('Расчёт выполнен',
                 {autoClose: delay,
@@ -394,10 +450,55 @@ export default function InputPage() {
             <div className="card-body input-grid">
                 <div className="left-col">
                     <h2>Выбор класса</h2>
-                    <ClassTabs value={classType} onChange={setClassType} />
+                    <div className="tabs-with-edit">
+                        <ClassTabs
+                            value={classType}
+                            onChange={setClassType}
+                            onDoubleClick={renameActiveClassByDblClick}
+                            // при желании можно пробросить названия во внутренний рендер табов:
+                            names={{
+                                A: names.codeClassA,
+                                B: names.codeClassB,
+                                V: names.codeClassV,
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="icon-btn edit-mini-btn"
+                            aria-label="Редактировать название класса"
+                            onClick={openNamesEditor}
+                            title="Изменить названия"
+                            style={{ marginLeft: 8 }}
+                        >
+                            ✎
+                        </button>
+                    </div>
 
                     <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
-                    <GroupTabs value={group} onChange={setGroup} />
+
+                    <div className="tabs-with-edit">
+                        <GroupTabs
+                            value={group}
+                            onChange={setGroup}
+                            onDoubleClick={renameActiveGroupByDblClick}
+                            names={{
+                                1: names.codeB11,
+                                2: names.codeB12,
+                                3: names.codeB13,
+                                4: names.codeB21,
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="icon-btn edit-mini-btn"
+                            aria-label="Редактировать название группы"
+                            onClick={openNamesEditor}
+                            title="Изменить названия"
+                            style={{ marginLeft: 8 }}
+                        >
+                            ✎
+                        </button>
+                    </div>
                 </div>
 
                 <div className="right-col">
@@ -431,6 +532,61 @@ export default function InputPage() {
                 </button>
             </div>
             <ToastContainer position="bottom-right" />
+
+            {namesEditorOpen && (
+                <div className="modal-backdrop" onClick={closeNamesEditor}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Изменение названий</h3>
+                        <div className="form-grid">
+                            <label>codeClassA</label>
+                            <input
+                                type="text"
+                                value={names.codeClassA}
+                                onChange={(e) => setNames((n) => ({ ...n, codeClassA: e.target.value }))}
+                            />
+                            <label>codeClassB</label>
+                            <input
+                                type="text"
+                                value={names.codeClassB}
+                                onChange={(e) => setNames((n) => ({ ...n, codeClassB: e.target.value }))}
+                            />
+                            <label>codeClassV</label>
+                            <input
+                                type="text"
+                                value={names.codeClassV}
+                                onChange={(e) => setNames((n) => ({ ...n, codeClassV: e.target.value }))}
+                            />
+                            <label>codeB11</label>
+                            <input
+                                type="text"
+                                value={names.codeB11}
+                                onChange={(e) => setNames((n) => ({ ...n, codeB11: e.target.value }))}
+                            />
+                            <label>codeB12</label>
+                            <input
+                                type="text"
+                                value={names.codeB12}
+                                onChange={(e) => setNames((n) => ({ ...n, codeB12: e.target.value }))}
+                            />
+                            <label>codeB13</label>
+                            <input
+                                type="text"
+                                value={names.codeB13}
+                                onChange={(e) => setNames((n) => ({ ...n, codeB13: e.target.value }))}
+                            />
+                            <label>codeB21</label>
+                            <input
+                                type="text"
+                                value={names.codeB21}
+                                onChange={(e) => setNames((n) => ({ ...n, codeB21: e.target.value }))}
+                            />
+                        </div>
+                        <div className="modal-actions">
+                            <button type="button" onClick={closeNamesEditor}>Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
