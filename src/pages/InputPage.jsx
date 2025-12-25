@@ -439,16 +439,16 @@ export default function InputPage() {
                                 C: names.codeClassV,
                             }}
                         />
-                        <button
-                            type="button"
-                            className="icon-btn edit-mini-btn"
-                            aria-label="Редактировать название класса"
-                            onClick={openNameEditorForClass}
-                            title="Изменить название"
-                            style={{ marginLeft: 8 }}
-                        >
-                            ✎
-                        </button>
+                        {/*<button*/}
+                        {/*    type="button"*/}
+                        {/*    className="icon-btn edit-mini-btn"*/}
+                        {/*    aria-label="Редактировать название класса"*/}
+                        {/*    onClick={openNameEditorForClass}*/}
+                        {/*    title="Изменить название"*/}
+                        {/*    style={{ marginLeft: 8 }}*/}
+                        {/*>*/}
+                        {/*    ✎*/}
+                        {/*</button>*/}
                     </div>
 
                     <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
@@ -465,16 +465,16 @@ export default function InputPage() {
                                 4: names.codeB21,
                             }}
                         />
-                        <button
-                            type="button"
-                            className="icon-btn edit-mini-btn"
-                            aria-label="Редактировать название группы"
-                            onClick={openNameEditorForGroup}
-                            title="Изменить название"
-                            style={{ marginLeft: 8 }}
-                        >
-                            ✎
-                        </button>
+                        {/*<button*/}
+                        {/*    type="button"*/}
+                        {/*    className="icon-btn edit-mini-btn"*/}
+                        {/*    aria-label="Редактировать название группы"*/}
+                        {/*    onClick={openNameEditorForGroup}*/}
+                        {/*    title="Изменить название"*/}
+                        {/*    style={{ marginLeft: 8 }}*/}
+                        {/*>*/}
+                        {/*    ✎*/}
+                        {/*</button>*/}
                     </div>
                 </div>
 
@@ -490,23 +490,35 @@ export default function InputPage() {
                             />
                         ))}
                     </div>
+                    <button
+                        className="primary-btn big-btn spinner-btn"
+                        disabled={busy}
+                        onClick={handleCompute}
+                    >
+                        {busy ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>Считаем =)</span>
+                            </>
+                        ) : ('Рассчитать')}
+                    </button>
                 </div>
             </div>
 
-            <div className="card-footer">
-                <button
-                    className="primary-btn big-btn spinner-btn"
-                    disabled={busy}
-                    onClick={handleCompute}
-                >
-                    {busy ? (
-                        <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>Считаем =)</span>
-                        </>
-                    ) : ('Рассчитать')}
-                </button>
-            </div>
+            {/*<div className="card-footer">*/}
+            {/*    <button*/}
+            {/*        className="primary-btn big-btn spinner-btn"*/}
+            {/*        disabled={busy}*/}
+            {/*        onClick={handleCompute}*/}
+            {/*    >*/}
+            {/*        {busy ? (*/}
+            {/*            <>*/}
+            {/*                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>*/}
+            {/*                <span>Считаем =)</span>*/}
+            {/*            </>*/}
+            {/*        ) : ('Рассчитать')}*/}
+            {/*    </button>*/}
+            {/*</div>*/}
 
             <ToastContainer position="bottom-right" />
 
