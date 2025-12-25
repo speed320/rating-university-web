@@ -52,9 +52,21 @@ export default function LoginPage() {
                         required
                     />
                     {error && <div className="auth-error">{error}</div>}
-                    <button className="primary-btn auth-btn" disabled={busy}>
-                        Войти
+                    <button
+                        className="primary-btn spinner-btn"
+                        type="submit"
+                        disabled={busy}
+                    >
+                        {busy ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>Вход...</span>
+                            </>
+                        ) : (
+                            'Войти'
+                        )}
                     </button>
+
                 </form>
                 <div className="auth-sub">
                     Нет аккаунта? <Link to="/register">Регистрация</Link>

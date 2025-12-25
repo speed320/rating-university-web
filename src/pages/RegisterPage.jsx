@@ -12,6 +12,18 @@ export default function RegisterPage() {
     const [pwd2, setPwd2] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const [passError, setPassError] = useState('');
+
+    const handlePasswordChange = (evt) => {
+        const password = evt.target.value;
+        setPwd1(password);
+        if (password.length < 6) {
+            setPassError('Пароль должен быть не менее 6 символов')
+        } else{
+            setPassError('');
+        }
+
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -58,9 +70,10 @@ export default function RegisterPage() {
                         type="password"
                         placeholder="Пароль"
                         value={pwd1}
-                        onChange={(e) => setPwd1(e.target.value)}
+                        onChange={handlePasswordChange}
                         required
                     />
+                    {passError && <div className="auth-error"> {passError}</div>}
                     <input
                         className="auth-input"
                         type="password"
@@ -70,9 +83,18 @@ export default function RegisterPage() {
                         required
                     />
                     {error && <div className="auth-error">{error}</div>}
-                    <button className="primary-btn auth-btn" disabled={busy}>
-                        Регистрация
+                    <button className="primary-btn spinner-btn" type="submit" disabled={busy || passError}>
+                        {busy ? (
+                            <>
+                                <span className='spinner-border spinner-border-sm mr-2' role="status" aria-hidden="true"> </span>
+                                Регистрация...
+                            </>
+                        ) : (
+                            'Регистрация'
+                        )}
+
                     </button>
+
                 </form>
                 <div className="auth-sub">
                     Уже есть аккаунт? <Link to="/login">Войти</Link>
