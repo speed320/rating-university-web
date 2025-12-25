@@ -28,7 +28,7 @@ const DEFAULT_B_PARAMS = {
 const DEFAULT_NAMES = {
     codeClassA: 'Класс A',
     codeClassB: 'Класс Б',
-    codeClassC: 'Класс В',
+    codeClassV: 'Класс В',
     codeB11: 'Группа 1',
     codeB12: 'Группа 2',
     codeB13: 'Группа 3',
@@ -70,7 +70,7 @@ function buildExportPayload(years, paramsB, names) {
                 names: {
                     codeClassA: names.codeClassA || 'Класс A',
                     codeClassB: names.codeClassB || 'Класс Б',
-                    codeClassC: names.codeClassC || 'Класс В',
+                    codeClassV: names.codeClassV || 'Класс В',
                     codeB11: names.codeB11 || 'Группа 1',
                     codeB12: names.codeB12 || 'Группа 2',
                     codeB13: names.codeB13 || 'Группа 3',
@@ -429,14 +429,14 @@ export default function InputPage() {
                     <h2>Выбор класса</h2>
                     <div className="tabs-with-edit">
                         <ClassTabs
-                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassC}`}
+                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassV}`}
                             value={classType}
                             onChange={setClassType}
                             onDoubleClick={renameActiveClassByDblClick}
                             names={{
                                 A: names.codeClassA,
                                 B: names.codeClassB,
-                                C: names.codeClassC,
+                                C: names.codeClassV,
                             }}
                         />
                         <button
