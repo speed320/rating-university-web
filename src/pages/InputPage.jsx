@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Api } from '../api';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import YearPicker from '../components/YearPicker.jsx';
 import ClassTabs from '../components/ClassTabs.jsx';
 import GroupTabs from '../components/GroupTabs.jsx';
 import NumericField from '../components/NumericField.jsx';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 const YEAR_NOW = new Date().getFullYear();
 const STORAGE_KEY = 'unirating_b_params_v2';
 
@@ -24,13 +25,23 @@ const DEFAULT_B_PARAMS = {
     beta212: '',
 };
 
+const DEFAULT_NAMES = {
+    codeClassA: 'Класс A',
+    codeClassB: 'Класс Б',
+    codeClassC: 'Класс В',
+    codeB11: 'Группа 1',
+    codeB12: 'Группа 2',
+    codeB13: 'Группа 3',
+    codeB21: 'Группа 4',
+};
+
 function normalizeNumber(v) {
     if (v === '' || v == null) return null;
     const n = Number(String(v).replace(',', '.'));
     return Number.isNaN(n) ? null : n;
 }
 
-function buildExportPayload(years, paramsB) {
+function buildExportPayload(years, paramsB, names) {
     const bData = years
         .map((year) => {
             const p = paramsB[year] || DEFAULT_B_PARAMS;
@@ -56,6 +67,15 @@ function buildExportPayload(years, paramsB) {
             {
                 classType: 'B',
                 data: bData,
+                names: {
+                    codeClassA: names.codeClassA || '',
+                    codeClassB: names.codeClassB || '',
+                    codeClassC: names.codeClassC || '',
+                    codeB11: names.codeB11 || '',
+                    codeB12: names.codeB12 || '',
+                    codeB13: names.codeB13 || '',
+                    codeB21: names.codeB21 || '',
+                },
             },
         ],
     };
@@ -67,15 +87,18 @@ export default function InputPage() {
     const [classType, setClassType] = useState('B');
     const [group, setGroup] = useState(1);
     const [paramsB, setParamsB] = useState({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
+    const [names, setNames] = useState({ ...DEFAULT_NAMES });
     const [busy, setBusy] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const [editTarget, setEditTarget] = useState(null); // { type: 'class'|'group', key: string, value: string }
+    const [namesEditorOpen, setNamesEditorOpen] = useState(false);
+
     const fileRef = useRef(null);
     const navigate = useNavigate();
 
-    // ---------------- 1. Загрузка на старте ----------------
     useEffect(() => {
         let hydratedFromStorage = false;
-
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
@@ -83,20 +106,20 @@ export default function InputPage() {
                 if (
                     saved &&
                     Array.isArray(saved.years) &&
-                    saved.years.length > 0 &&
                     typeof saved.currentYear === 'number' &&
-                    typeof saved.paramsB === 'object'
+                    typeof saved.paramsB === 'object' &&
+                    typeof saved.names === 'object'
                 ) {
                     setYears(saved.years);
                     setCurrentYear(saved.currentYear);
                     setParamsB(saved.paramsB);
+                    setNames({ ...DEFAULT_NAMES, ...saved.names });
                     hydratedFromStorage = true;
                 }
             }
         } catch (e) {
             console.warn('Ошибка чтения состояния из localStorage', e);
         }
-
         if (hydratedFromStorage) return;
 
         Api.getLastParamsB()
@@ -128,15 +151,14 @@ export default function InputPage() {
             .catch(() => {});
     }, []);
 
-    // ---------------- 2. Автосохранение ----------------
     useEffect(() => {
-        const payload = { years, currentYear, paramsB };
+        const payload = { years, currentYear, paramsB, names };
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         } catch (e) {
             console.warn('Ошибка сохранения в localStorage', e);
         }
-    }, [years, currentYear, paramsB]);
+    }, [years, currentYear, paramsB, names]);
 
     const ensureYear = (year) => {
         setYears((ys) => (ys.includes(year) ? ys : [...ys, year].sort((a, b) => a - b)));
@@ -161,7 +183,6 @@ export default function InputPage() {
         }));
     };
 
-    // ---------------- 3. Очистить всё ----------------
     const clearAll = async () => {
         if (busy) return;
         setBusy(true);
@@ -169,6 +190,7 @@ export default function InputPage() {
             setParamsB({ [YEAR_NOW]: { ...DEFAULT_B_PARAMS } });
             setYears([YEAR_NOW]);
             setCurrentYear(YEAR_NOW);
+            setNames({ ...DEFAULT_NAMES });
             localStorage.removeItem(STORAGE_KEY);
             await Api.clearCurrent();
         } catch (e) {
@@ -179,7 +201,6 @@ export default function InputPage() {
         }
     };
 
-    // Удалить только текущий год
     const handleDeleteCurrentYear = () => {
         setParamsB((prev) => {
             const copy = { ...prev };
@@ -200,22 +221,17 @@ export default function InputPage() {
         setMenuOpen(false);
     };
 
-    // ---------------- 4. Экспорт / импорт ----------------
     const handleExport = () => {
         try {
-            const payload = buildExportPayload(years, paramsB);
-
+            const payload = buildExportPayload(years, paramsB, names);
             const blob = new Blob([JSON.stringify(payload, null, 2)], {
                 type: 'application/json;charset=utf-8',
             });
-
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-
             a.href = url;
             a.download = `rating-params-${stamp}.json`;
-
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -270,10 +286,15 @@ export default function InputPage() {
             setYears(uniqueYears);
             setCurrentYear(uniqueYears[0]);
 
+            if (bBlock.names && typeof bBlock.names === 'object') {
+                setNames({ ...DEFAULT_NAMES, ...bBlock.names });
+            }
+
             const payload = {
                 years: uniqueYears,
                 currentYear: uniqueYears[0],
                 paramsB: map,
+                names: bBlock.names || names,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
@@ -296,19 +317,39 @@ export default function InputPage() {
         }));
     };
 
-    // ---------------- 5. Расчёт ----------------
+    const openNameEditorForClass = () => {
+        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassC';
+        setEditTarget({ type: 'class', key, value: names[key] || '' });
+        setNamesEditorOpen(true);
+    };
+
+    const openNameEditorForGroup = () => {
+        const map = { 1: 'codeB11', 2: 'codeB12', 3: 'codeB13', 4: 'codeB21' };
+        const key = map[group];
+        setEditTarget({ type: 'group', key, value: names[key] || '' });
+        setNamesEditorOpen(true);
+    };
+
+    const closeNamesEditor = () => {
+        setNamesEditorOpen(false);
+        setEditTarget(null);
+    };
+
+    const renameActiveClassByDblClick = () => openNameEditorForClass();
+    const renameActiveGroupByDblClick = () => openNameEditorForGroup();
+
     const handleCompute = async () => {
         setBusy(true);
         try {
             const delay = 1500;
-            const payload = buildExportPayload(years, paramsB);
+            const payload = buildExportPayload(years, paramsB, names);
             await Api.calcMulti(payload);
-            toast.success('Расчёт выполнен',
-                {autoClose: delay,
-                        onClose: () => {
-                            navigate('/analytics'); // редирект после закрытия тоста
-                        }
-                });
+            toast.success('Расчёт выполнен', {
+                autoClose: delay,
+                onClose: () => {
+                    navigate('/analytics');
+                },
+            });
         } catch (err) {
             alert('Ошибка расчёта: ' + err.message);
         } finally {
@@ -364,18 +405,10 @@ export default function InputPage() {
                             </button>
                             {menuOpen && (
                                 <div className="menu-dropdown-list">
-                                    <button type="button" onClick={handleImportClick}>
-                                        Импорт JSON
-                                    </button>
-                                    <button type="button" onClick={handleExport}>
-                                        Экспорт JSON
-                                    </button>
-                                    <button type="button" onClick={handleDeleteCurrentYear}>
-                                        Удалить текущий год
-                                    </button>
-                                    <button type="button" onClick={clearAll}>
-                                        Очистить всё
-                                    </button>
+                                    <button type="button" onClick={handleImportClick}>Импорт JSON</button>
+                                    <button type="button" onClick={handleExport}>Экспорт JSON</button>
+                                    <button type="button" onClick={handleDeleteCurrentYear}>Удалить текущий год</button>
+                                    <button type="button" onClick={clearAll}>Очистить всё</button>
                                 </div>
                             )}
                         </div>
@@ -394,10 +427,55 @@ export default function InputPage() {
             <div className="card-body input-grid">
                 <div className="left-col">
                     <h2>Выбор класса</h2>
-                    <ClassTabs value={classType} onChange={setClassType} />
+                    <div className="tabs-with-edit">
+                        <ClassTabs
+                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassC}`}
+                            value={classType}
+                            onChange={setClassType}
+                            onDoubleClick={renameActiveClassByDblClick}
+                            names={{
+                                A: names.codeClassA,
+                                B: names.codeClassB,
+                                C: names.codeClassC,
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="icon-btn edit-mini-btn"
+                            aria-label="Редактировать название класса"
+                            onClick={openNameEditorForClass}
+                            title="Изменить название"
+                            style={{ marginLeft: 8 }}
+                        >
+                            ✎
+                        </button>
+                    </div>
 
                     <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
-                    <GroupTabs value={group} onChange={setGroup} />
+                    <div className="tabs-with-edit">
+                        <GroupTabs
+                            key={`group-tabs-${names.codeB11}-${names.codeB12}-${names.codeB13}-${names.codeB21}`}
+                            value={group}
+                            onChange={setGroup}
+                            onDoubleClick={renameActiveGroupByDblClick}
+                            names={{
+                                1: names.codeB11,
+                                2: names.codeB12,
+                                3: names.codeB13,
+                                4: names.codeB21,
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="icon-btn edit-mini-btn"
+                            aria-label="Редактировать название группы"
+                            onClick={openNameEditorForGroup}
+                            title="Изменить название"
+                            style={{ marginLeft: 8 }}
+                        >
+                            ✎
+                        </button>
+                    </div>
                 </div>
 
                 <div className="right-col">
@@ -421,16 +499,81 @@ export default function InputPage() {
                     disabled={busy}
                     onClick={handleCompute}
                 >
-                    {busy?(
+                    {busy ? (
                         <>
                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                             <span>Считаем =)</span>
                         </>
-                    ):('Рассчитать')}
-
+                    ) : ('Рассчитать')}
                 </button>
             </div>
+
             <ToastContainer position="bottom-right" />
+
+            {namesEditorOpen && editTarget && (
+                <div
+                    className="modal-backdrop"
+                    onClick={closeNamesEditor}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                    }}
+                >
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#fff',
+                            borderRadius: 12,
+                            width: 'min(420px, 90vw)',
+                            padding: 20,
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                        }}
+                    >
+                        <h3 style={{ marginTop: 0 }}>
+                            {editTarget.type === 'class' ? 'Изменение названия класса' : 'Изменение названия группы'}
+                        </h3>
+                        <div className="form-grid" style={{ display: 'grid', gap: 12 }}>
+                            <label style={{ fontSize: 12, color: '#666' }}>{editTarget.key}</label>
+                            <input
+                                type="text"
+                                value={editTarget.value}
+                                onChange={(e) => {
+                                    const newValue = e.target.value;
+                                    setEditTarget((t) => ({ ...t, value: newValue }));
+                                    setNames((n) => ({ ...n, [editTarget.key]: newValue }));
+                                }}
+                                style={{
+                                    padding: '10px 12px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: 8,
+                                    fontSize: 14,
+                                }}
+                                placeholder="Введите новое название"
+                            />
+                        </div>
+                        <div
+                            className="modal-actions"
+                            style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}
+                        >
+                            <button type="button" onClick={closeNamesEditor}>Отмена</button>
+                            <button
+                                type="button"
+                                className="primary-btn"
+                                onClick={closeNamesEditor}
+                                disabled={!editTarget.value.trim()}
+                            >
+                                Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
