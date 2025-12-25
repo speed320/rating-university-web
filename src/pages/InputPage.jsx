@@ -331,7 +331,7 @@ export default function InputPage() {
         setNamesEditorOpen(true);
         setMenuOpen(false)
     };
-    const closeNameEditor = () => setNamesEditorOpen(false)
+    const closeNamesEditor = () => setNamesEditorOpen(false)
 
     const renameActiveClassByDblClick = () => {
         const key = classType === 'A' ? 'codeClassA' :
