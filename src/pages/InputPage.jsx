@@ -28,7 +28,7 @@ const DEFAULT_B_PARAMS = {
 const DEFAULT_NAMES = {
     codeClassA: 'Класс A',
     codeClassB: 'Класс Б',
-    codeClassC: 'Класс В',
+    codeClassV: 'Класс В',
     codeB11: 'Группа 1',
     codeB12: 'Группа 2',
     codeB13: 'Группа 3',
@@ -68,13 +68,13 @@ function buildExportPayload(years, paramsB, names) {
                 classType: 'B',
                 data: bData,
                 names: {
-                    codeClassA: names.codeClassA || '',
-                    codeClassB: names.codeClassB || '',
-                    codeClassC: names.codeClassC || '',
-                    codeB11: names.codeB11 || '',
-                    codeB12: names.codeB12 || '',
-                    codeB13: names.codeB13 || '',
-                    codeB21: names.codeB21 || '',
+                    codeClassA: names.codeClassA || 'Класс A',
+                    codeClassB: names.codeClassB || 'Класс Б',
+                    codeClassV: names.codeClassV || 'Класс В',
+                    codeB11: names.codeB11 || 'Группа 1',
+                    codeB12: names.codeB12 || 'Группа 2',
+                    codeB13: names.codeB13 || 'Группа 3',
+                    codeB21: names.codeB21 || 'Группа 4',
                 },
             },
         ],
@@ -318,7 +318,7 @@ export default function InputPage() {
     };
 
     const openNameEditorForClass = () => {
-        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassC';
+        const key = classType === 'A' ? 'codeClassA' : classType === 'B' ? 'codeClassB' : 'codeClassV';
         setEditTarget({ type: 'class', key, value: names[key] || '' });
         setNamesEditorOpen(true);
     };
@@ -429,14 +429,14 @@ export default function InputPage() {
                     <h2>Выбор класса</h2>
                     <div className="tabs-with-edit">
                         <ClassTabs
-                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassC}`}
+                            key={`class-tabs-${names.codeClassA}-${names.codeClassB}-${names.codeClassV}`}
                             value={classType}
                             onChange={setClassType}
                             onDoubleClick={renameActiveClassByDblClick}
                             names={{
                                 A: names.codeClassA,
                                 B: names.codeClassB,
-                                C: names.codeClassC,
+                                C: names.codeClassV,
                             }}
                         />
                         <button
