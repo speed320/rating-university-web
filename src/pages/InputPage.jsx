@@ -439,16 +439,16 @@ export default function InputPage() {
                                 C: names.codeClassV,
                             }}
                         />
-                        <button
-                            type="button"
-                            className="icon-btn edit-mini-btn"
-                            aria-label="Редактировать название класса"
-                            onClick={openNameEditorForClass}
-                            title="Изменить название"
-                            style={{ marginLeft: 8 }}
-                        >
-                            ✎
-                        </button>
+                        {/*<button*/}
+                        {/*    type="button"*/}
+                        {/*    className="icon-btn edit-mini-btn"*/}
+                        {/*    aria-label="Редактировать название класса"*/}
+                        {/*    onClick={openNameEditorForClass}*/}
+                        {/*    title="Изменить название"*/}
+                        {/*    style={{ marginLeft: 8 }}*/}
+                        {/*>*/}
+                        {/*    ✎*/}
+                        {/*</button>*/}
                     </div>
 
                     <h2 style={{ marginTop: 24 }}>Выбор группы</h2>
@@ -465,16 +465,16 @@ export default function InputPage() {
                                 4: names.codeB21,
                             }}
                         />
-                        <button
-                            type="button"
-                            className="icon-btn edit-mini-btn"
-                            aria-label="Редактировать название группы"
-                            onClick={openNameEditorForGroup}
-                            title="Изменить название"
-                            style={{ marginLeft: 8 }}
-                        >
-                            ✎
-                        </button>
+                        {/*<button*/}
+                        {/*    type="button"*/}
+                        {/*    className="icon-btn edit-mini-btn"*/}
+                        {/*    aria-label="Редактировать название группы"*/}
+                        {/*    onClick={openNameEditorForGroup}*/}
+                        {/*    title="Изменить название"*/}
+                        {/*    style={{ marginLeft: 8 }}*/}
+                        {/*>*/}
+                        {/*    ✎*/}
+                        {/*</button>*/}
                     </div>
                 </div>
 
@@ -490,23 +490,35 @@ export default function InputPage() {
                             />
                         ))}
                     </div>
+                    <button
+                        className="primary-btn big-btn spinner-btn"
+                        disabled={busy}
+                        onClick={handleCompute}
+                    >
+                        {busy ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>Считаем =)</span>
+                            </>
+                        ) : ('Рассчитать')}
+                    </button>
                 </div>
             </div>
 
-            <div className="card-footer">
-                <button
-                    className="primary-btn big-btn spinner-btn"
-                    disabled={busy}
-                    onClick={handleCompute}
-                >
-                    {busy ? (
-                        <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>Считаем =)</span>
-                        </>
-                    ) : ('Рассчитать')}
-                </button>
-            </div>
+            {/*<div className="card-footer">*/}
+            {/*    <button*/}
+            {/*        className="primary-btn big-btn spinner-btn"*/}
+            {/*        disabled={busy}*/}
+            {/*        onClick={handleCompute}*/}
+            {/*    >*/}
+            {/*        {busy ? (*/}
+            {/*            <>*/}
+            {/*                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>*/}
+            {/*                <span>Считаем =)</span>*/}
+            {/*            </>*/}
+            {/*        ) : ('Рассчитать')}*/}
+            {/*    </button>*/}
+            {/*</div>*/}
 
             <ToastContainer position="bottom-right" />
 
@@ -535,11 +547,11 @@ export default function InputPage() {
                             boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                         }}
                     >
-                        <h3 style={{ marginTop: 0 }}>
+                        <h3 style={{ marginTop: 0, marginBottom:12 }}>
                             {editTarget.type === 'class' ? 'Изменение названия класса' : 'Изменение названия группы'}
                         </h3>
                         <div className="form-grid" style={{ display: 'grid', gap: 12 }}>
-                            <label style={{ fontSize: 12, color: '#666' }}>{editTarget.key}</label>
+                            {/*<label style={{ fontSize: 12, color: '#666' }}>{editTarget.key}</label>*/}
                             <input
                                 type="text"
                                 value={editTarget.value}
@@ -561,10 +573,10 @@ export default function InputPage() {
                             className="modal-actions"
                             style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}
                         >
-                            <button type="button" onClick={closeNamesEditor}>Отмена</button>
+                            <button type="button" className="cancel-btn" onClick={closeNamesEditor}>Отмена</button>
                             <button
                                 type="button"
-                                className="primary-btn"
+                                className="save-btn"
                                 onClick={closeNamesEditor}
                                 disabled={!editTarget.value.trim()}
                             >

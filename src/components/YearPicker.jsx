@@ -12,7 +12,7 @@ export default function YearPicker({
 
     const buttonRef = useRef(null);
     const modalRef = useRef(null);
-
+    const [error, setError] = useState("");
     const handleSelectChange = (e) => {
         const year = Number(e.target.value);
         if (!Number.isNaN(year)) {
@@ -40,13 +40,27 @@ export default function YearPicker({
 
     const handleAddYear = () => {
         const yearNum = Number(newYear.trim());
-        if (!yearNum || Number.isNaN(yearNum)) return;
-        if (years.includes(yearNum)) {
-            // уже есть такой год — просто переключимся на него
-            onYearChange(yearNum);
-            closeModal();
+
+        if (!newYear.trim()) {
+            setError("Введите год");
             return;
         }
+
+        if (Number.isNaN(yearNum)) {
+            setError("Год должен быть числом");
+            return;
+        }
+
+        if (yearNum < 1800) {
+            setError("Год должен быть не меньше 1800");
+            return;
+        }
+
+        if (years.includes(yearNum)) {
+            setError("Такой год уже существует");
+            return;
+        }
+
         onAddYear(yearNum);
         closeModal();
     };
@@ -123,6 +137,7 @@ export default function YearPicker({
         return () => document.removeEventListener("keydown", onKey);
     }, [isModalOpen]);
 
+    const isYearValid = newYear >= 1800 && newYear !== ""; // Проверка, что год валиден
     return (
         <>
             <div className="year-picker">
@@ -184,11 +199,25 @@ export default function YearPicker({
                                 className="year-modal-input"
                                 placeholder="Введите год"
                                 value={newYear}
-                                onChange={(e) => setNewYear(e.target.value)}
+                                onChange={(e) => {
+                                    setNewYear(e.target.value);
+                                    setError("");
+                                }}
                                 onKeyDown={handleKeyDown}
                                 autoFocus
                             />
+                            {error && (
+                                <div
+                                    style={{
 
+                                        color: "#d32f2f",
+                                        borderRadius: "4px",
+                                        fontSize: "13px",
+                                    }}
+                                >
+                                    {error}
+                                </div>
+                            )}
                             <button
                                 type="button"
                                 className="year-modal-submit"

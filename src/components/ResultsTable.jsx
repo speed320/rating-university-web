@@ -44,32 +44,7 @@ export default function ResultsTable({
         setEditValue('');
     };
 
-    const renderHeaderCell = (key, label) => (
-        <th>
-            {editingKey === key ? (
-                <input
-                    className="metric-edit-input"
-                    autoFocus
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={commitEdit}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') commitEdit();
-                        if (e.key === 'Escape') cancelEdit();
-                    }}
-                />
-            ) : (
-                <button
-                    type="button"
-                    className="metric-header-btn"
-                    onClick={() => startEdit(key, label)}
-                    title="Изменить название метрики"
-                >
-                    {label}
-                </button>
-            )}
-        </th>
-    );
+
 
     return (
         <div className="results-table-wrapper">
@@ -77,10 +52,10 @@ export default function ResultsTable({
                 <thead>
                 <tr>
                     <th>Год</th>
-                    {renderHeaderCell('codeB11', metricNames.codeB11 || 'B11')}
-                    {renderHeaderCell('codeB12', metricNames.codeB12 || 'B12')}
-                    {renderHeaderCell('codeB13', metricNames.codeB13 || 'B13')}
-                    {renderHeaderCell('codeB21', metricNames.codeB21 || 'B21')}
+                    <th>{metricNames.codeB11 || 'B11'}</th>
+                    <th>{metricNames.codeB12 || 'B12'}</th>
+                    <th>{metricNames.codeB13 || 'B13'}</th>
+                    <th>{metricNames.codeB21 || 'B21'}</th>
                     <th>Total B</th>
                     <th>Показать</th>
                 </tr>

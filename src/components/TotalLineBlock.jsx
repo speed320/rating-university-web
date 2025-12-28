@@ -10,7 +10,8 @@ export default function TotalLineBlock({ rows }) {
     }));
 
     return (
-        <div className="line-wrapper">
+        <div className="card line-wrapper">
+            <h3>Диаграмма по годам</h3>
             <LineChart width={700} height={300} data={data} margin={{ top: 20, right: 40, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="year" />

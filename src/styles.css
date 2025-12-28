@@ -5,8 +5,16 @@
 }
 .app-root {
     min-height: 100vh;
-    background: #e4edff;
+
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:
+        url("./assets/icons/christmas-tree.svg") no-repeat calc(0% - 100px) 100% / 300px,
+        url("./assets/icons/christmas-tree.svg") no-repeat calc(0% + 40px) calc(100% + 50px) / 300px,
+        url("./assets/icons/default-christmas-tree.svg") no-repeat calc(110%) calc(100%) / 300px,
+        url("./assets/icons/figure-background.svg"),
+        url("./assets/icons/violet-circle.svg") no-repeat calc(100% + 50px) calc(0% - 15%) / 500px;
+    background-color: #dce9ff;
+
 }
 
 .top-bar {
@@ -14,29 +22,49 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 32px;
-    background: #f7f9ff;
+    height: 70px;
+    background-color: #1E4EAE;
+    /*background: linear-gradient(*/
+    /*        to bottom,*/
+    /*        rgba(255, 255, 255, 1) 0%,     !* полностью белый в начале *!*/
+    /*        rgba(255, 255, 255, 0.8) 70%,  !* немного прозрачности ближе к концу *!*/
+    /*        rgba(255, 255, 255, 0.17) 100%    !* полностью прозрачный у конца *!*/
+    /*);*/
 }
+.top-bar::before {
+    content: "";
+    position: absolute;
+    top: +70px; /* чуть выше шапки */
+    left: 0;
+    width: 100%;
+    height: 50px; /* высота гирлянды */
+    background: url('./assets/icons/garland.svg') no-repeat center top;
+    background-size: contain;
+    pointer-events: none; /* чтобы не мешать кликам по шапке */
 
+}
 .logo-text {
     font-weight: 600;
     font-size: 20px;
     margin-right: 32px;
+    color: #d5d5d5;
 }
 
 .top-nav {
     display: flex;
-    gap: 24px;
+    gap: 48px;
+
 }
 
 .top-nav-link {
     text-decoration: none;
-    font-size: 15px;
+    font-size: 16px;
     color: #555;
 }
 
 .top-nav-link.active,
 .top-nav-link:hover {
-    color: #295bcc;
+    color: #F97316;
 }
 
 .top-bar-right {
@@ -47,7 +75,7 @@
 
 .user-name {
     font-size: 14px;
-    color: #555;
+    color: white;
 }
 
 .icon-btn {
@@ -58,13 +86,20 @@
     background: #dee6ff;
     cursor: pointer;
 }
-
+.logout-btn{
+    background: rgb(223, 223, 223);
+    padding: 4px;
+}
+.icon-btn img {
+    width: 100%;  /* Изображение займет 100% ширины кнопки */
+    height: 100%; /* Изображение займет 100% высоты кнопки */
+}
 .page-body {
     padding: 32px;
 }
 
 .card {
-    background: #f8fbff;
+    background: rgba(248, 251, 255, 0.69);
     border-radius: 24px;
     padding: 24px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
@@ -92,7 +127,15 @@
 .right-col h2 {
     margin-bottom: 16px;
 }
+.right-col {
+    display: flex;
+    flex-direction: column; /* разложение сверху вниз */
+    gap: 16px;              /* промежутки между элементами */
+}
 
+.right-col .primary-btn.big-btn.spinner-btn {
+    margin-top: auto; /* "толкает" кнопку вниз */
+}
 .tabs-vertical {
     display: flex;
     flex-direction: column;
@@ -103,7 +146,7 @@
     border-radius: 6px;
     border: 1px solid #e2e7ff;
     padding: 10px 16px;
-    background: #fff;
+    background: #000000;
     cursor: pointer;
 }
 
@@ -135,7 +178,11 @@
     padding: 0 10px;
     background: #fafbff;
 }
-
+.num-input:focus {
+    outline: none;                 /* убираем стандартную обводку */
+    border-color: #F97316;         /* новый цвет рамки */
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.18);
+}
 .card-footer {
     margin-top: 24px;
 }
@@ -152,6 +199,11 @@
     width: 100%;
     padding: 12px 0;
     font-size: 16px;
+    background-color: #EA580C;
+}
+.big-btn:hover {
+    background-color: #EA580C;
+    box-shadow: 0 0 15px rgba(234, 88, 12, 0.6);
 }
 
 .year-select {
@@ -203,7 +255,7 @@
 
 .auth-btn {
     width: 100%;
-    margin-top: 8px;
+    margin-: 8px;
     padding: 10px 0;
 }
 
@@ -248,6 +300,13 @@
     border: 1px solid #e2e7ff;
     padding: 12px 16px;
     background: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Анимация */
+}
+
+.history-item:hover {
+    background: #FFF7ED; /* Легкий голубой оттенок фона */
+    transform: scale(1.05); /* Увеличиваем элемент */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Более сильная тень */
 }
 
 .history-main {
@@ -281,7 +340,6 @@
 
 /* Блок выбора года */
 .year-picker {
-    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -327,25 +385,23 @@
     transform: translateY(1px);
 }
 
-/* Модалка добавления года */
-.year-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    /*background: rgba(15, 23, 42, 0.15);*/
-    z-index: 1000;
-}
+/* Модалка добавлния года */
+/*.year-modal-backdrop {*/
+/*    position: fixed;*/
+/*    inset: 0;*/
+/*    background: rgba(15, 23, 42, 0.15);*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    justify-content: center;*/
+/*    z-index: 1000;*/
+/*}*/
 
 .year-modal {
-    position: absolute;
-    top: 100%; /* сразу под кнопкой "+" */
-    left: 0;   /* совпадает с левым краем кнопки */
-    transform: translateX(0); /* можно не писать */
     background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 1010; /* выше backdrop */
-    min-width: 200px;
+    border-radius: 18px;
+    padding: 24px 32px 28px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+    min-width: 360px;
 }
 
 .year-modal-header {
@@ -375,7 +431,7 @@
     border: 1px solid #d1d5db;
     background: #f9fafb;
     font-size: 14px;
-    margin-bottom: 20px;
+
     outline: none;
 }
 
@@ -397,6 +453,7 @@
     cursor: pointer;
     transition: background 0.15s ease, transform 0.05s ease,
     box-shadow 0.15s ease;
+    margin-top: 20px;
 }
 
 .year-modal-submit:hover {
@@ -429,7 +486,7 @@
 }
 
 .tab-btn:hover {
-    background: #f3f4ff;
+    background: #c8d8ff;
 }
 
 .tab-btn-active {
@@ -449,10 +506,25 @@
     position: relative;
 }
 
+/* Стиль для кнопки с классом menu-btn */
 .menu-btn {
-    font-size: 24px;
-    line-height: 1;
-    padding: 4px 10px;
+    padding-bottom: 3px;
+    display: flex;              /* Включаем Flexbox */
+    justify-content: center;    /* Центрируем содержимое по горизонтали */
+    align-items: center;        /* Центрируем содержимое по вертикали */
+    width: 40px;                /* Ширина кнопки */
+    height: 40px;               /* Высота кнопки */
+    background: rgb(223, 223, 223);  /* Цвет фона */
+    border: none;               /* Убираем границу */
+    border-radius: 50%;         /* Круглая кнопка */
+    font-size: 24px;            /* Размер шрифта */
+                /* Цвет текста (или символа) */
+    cursor: pointer;           /* Курсор при наведении */
+}
+
+.menu-btn:disabled {
+    background-color: #ddd;    /* Цвет кнопки при disabled */
+    cursor: not-allowed;       /* Курсор при disabled */
 }
 
 .menu-dropdown-list {
@@ -560,11 +632,11 @@
 
 .spinner-btn {
     padding: 12px 16px; /* Отступы */
-    border-radius: 8px;
-    border: none;
+    border-radius: 12px;
     color: #fff;
     font-size: var(--font-size-medium);
     font-weight: 500;
+
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -574,3 +646,76 @@
     transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
+.top-nav-link {
+    position: relative;
+    text-decoration: none;
+    color: #FFFFFF;
+    padding-bottom: 3px;
+}
+
+
+.group-btn-active{
+    background-color: #FFF7ED;
+    border: 2px solid #F97316;
+}
+.group-btn-active:hover{
+    background: #fdddb7;
+}
+.group-btn:hover{
+     background-color: #ffe0bd;
+ }
+
+.save-btn{
+    padding: 1px;
+    border-radius: 12px;
+    border: none;
+    background: #2156c8;
+    color: #ffffff;
+    font-size: 14px;
+    width: 90px;
+}
+.save-btn:hover {
+    background-color: #1a4b9e; /* Темнее на ховере */
+    /*transform: scale(1.05); !* Немного увеличиваем размер при наведении *!*/
+}
+.cancel-btn{
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    background: #ca1414;
+    color: #ffffff;
+    font-size: 14px;
+}
+.cancel-btn:hover {
+    background-color: #a31313;
+
+}
+
+.analytics-right {
+    padding-top: 24px;
+    display: flex; /* Включаем flex-контейнер */
+    gap: 20px; /* Отступы между блоками */
+    flex-wrap: wrap; /* Если контейнер слишком мал, элементы переходят на новую строку */
+    height: 100%; /* Обеспечиваем, что контейнер будет растягиваться по высоте */
+}
+
+.card{
+    flex-grow: 1; /* Этот блок может растягиваться, если есть свободное пространство */
+    flex-shrink: 1; /* Этот блок может сжиматься, если пространство ограничено */
+    min-width: 400px; /* Минимальная ширина для паучьей диаграммы */
+    height: 100%; /* Диаграмма растягивается по высоте */
+}
+
+.secondary-btn{
+    width: 100%;
+    height: 40px;
+    font-size: 16px;
+    margin-top: 12px;
+    color: white;
+    background-color: #b30808;
+    border-radius: 12px;
+    border: #a31313;
+}
+.secondary-btn:hover {
+    background-color: #a31313;
+}

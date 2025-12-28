@@ -127,18 +127,16 @@ export default function HistoryPage() {
             </div>
         );
     }
+    const sortedItems = [...items].sort((a, b) => b.iter - a.iter);  // сортировка по итерации от большой к меньшей
 
     return (
         <div className="card">
             <div className="history-header">
                 <h2>Сохранённые сессии</h2>
-                <button className="secondary-btn" type="button" onClick={handleClearHistory}>
-                    Очистить историю
-                </button>
             </div>
 
             <div className="history-list">
-                {items.map((it) => (
+                {sortedItems.map((it) => (
                     <div key={it.iter} className="history-item" onClick={handleOpenIteration(it.iter)}>
                         <div className="history-main">
                             <span className="history-title">Расчёт #{it.iter}</span>
@@ -154,6 +152,9 @@ export default function HistoryPage() {
                     </div>
                 ))}
             </div>
+            <button className="secondary-btn" type="button" onClick={handleClearHistory}>
+                Очистить историю
+            </button>
         </div>
     );
 }
